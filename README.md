@@ -1,117 +1,171 @@
 # Final Project
 
--   [ ] Read the [project requirements](https://vikramsinghmtl.github.io/420-5P6-Game-Programming/project/requirements).
--   [ ] Replace the sample proposal below with the one for your game idea.
--   [ ] Get the proposal greenlit by Vik.
--   [ ] Place any assets in `assets/` and remember to update `src/config.json`.
--   [ ] Decide on a height and width inside `src/globals.js`. The height and width will most likely be determined based on the size of the assets you find.
--   [ ] Start building the individual components of your game, constantly referring to the proposal you wrote to keep yourself on track.
--   [ ] Good luck, you got this!
+- [ ] Read the [project requirements](https://vikramsinghmtl.github.io/420-5P6-Game-Programming/project/requirements).
+- [ ] Replace the sample proposal below with the one for your game idea.
+- [ ] Get the proposal greenlit by Vik.
+- [ ] Place any assets in `assets/` and remember to update `src/config.json`.
+- [ ] Decide on a height and width inside `src/globals.js`. The height and width will most likely be determined based on the size of the assets you find.
+- [ ] Start building the individual components of your game, constantly referring to the proposal you wrote to keep yourself on track.
+- [ ] Good luck, you got this!
 
 ---
 
-# Sample Proposal - Pokémon the Trading Card Game
+# Cosmic Hopper
 
-> [!note]
-> This was taken from a project I did in university so the scope is **much** larger than what I'm expecting from you in terms of number of features!
+## Description
 
-## ✒️ Description
+Cosmic Hopper is a vertical platformer where a player controls an astronaut character trying to escape from a collapsing alien planet. The player must jump from platform to platform, ascending infinitely while avoiding obstacles and enemies. Unlike traditional Doodle Jump, this version features a gravity shift mechanic where the player can temporarily reverse gravity to reach special platforms and collect power-ups.
 
-In this turn-based battle card game, players assume the role of a Pokémon trainer and use their Pokémon to battle their opponent's Pokémon. Players play Pokémon to the field and attack their opponent's Pokémon. A Pokémon that has sustained enough damage is Knocked Out, and the player who knocked it out draws a Prize card. There are usually six Prize cards, and the primary win condition is to draw all of them. Other ways to win are by knocking out all the Pokémon the opponent has on the field so that the opponent has none left, or if at the beginning of their opponent's turn there are no cards left to draw in the opponent's deck.
+This is an endless vertical platformer with action/arcade elements and roguelike progression. Players automatically jump when landing on platforms and must navigate increasingly difficult challenges as they climb higher.
 
-## 🕹️ Gameplay
+## Gameplay
 
-Players begin by having one player select heads or tails, and the other flips a coin; the winner of the coin flip will decide who goes first or second. The player going first cannot attack their first turn, unless the card says otherwise. (Dice may be used in place of coins, with even numbers representing heads and odd numbers representing tails). Players then shuffle their decks and draw seven cards, then play one Basic Pokémon onto the field. This Pokémon is known as the Active Pokémon and is usually the one that attacks and receives damage. If a player does not have any Basic Pokémon, they must shuffle and draw a new hand, and the opponent may draw one additional card. Once both players have at least one Basic Pokémon, they can play up to five more Basic Pokémon onto their "Bench" (representing the maximum-carry limit of six from the video games). Players then take the top six cards of their deck and place them to the side as Prize Cards. Play then begins with the player who won the coin flip.
+Players automatically jump when landing on platforms. The game starts with a coin flip to determine initial platform generation seed. Players draw their starting position and must immediately begin climbing.
 
-Play alternates between players who may take several actions during their turn, including playing new Basic Pokémon, evolving their Pokémon, playing Trainer cards and Energy cards, and using Pokémon Abilities. A player may also retreat their Active Pokémon, switching the Active Pokémon with one on the Bench. At the end of their turn, a player may use one of their Active Pokémon's attacks, provided the prerequisite amount and types of Energy are attached to that Pokémon. Effects from that attack are then activated and damage may be placed on the Defending Pokémon; some attacks simply have effects but do not do damage. Damage may be modified depending on whether the defender has a weakness or a resistance to the attacker's Pokémon type. If the final damage exceeds the defending Pokémon's HP, it is Knocked Out, and the active player takes a prize card and ends their turn.
+The core gameplay loop involves:
+- Moving left and right while airborne using arrow keys or A/D keys
+- Landing on various platform types (normal, breakable, moving, bouncy)
+- Avoiding or defeating enemies that patrol platforms or fly around
+- Collecting power-ups including gravity flip, shield, and double jump (WIP)
+- Using the spacebar to activate power-up when the power-up is collected
+- Managing increasing difficulty as height increases
+- Screen wrapping (exit left side, appear on right side)
+- Tracking score based on height achieved (maybe enemies increase score)
 
-This implementation of _Pokémon the Trading Card Game_ is a single player experience with an AI. The game is played primarily with the mouse to interact with the cards and general GUI. The players can optionally hit `M` on their keyboard to mute all game sounds.
+**Victory Conditions:**
+- Reach milestone heights to earn medals: 1000m (Bronze), 5000m (Silver), 10000m (Gold)
+- Game continues infinitely after gold medal for high score chasing
 
-## 📃 Requirements
+**Loss Conditions:**
+- Fall off the bottom of the screen
+- Collide with an enemy without shield protection
 
-> [!note]
-> This was a web project so that's why you'll see requirements about logging in and uploading data which for you is irrelevant. Focus more on the requirements describing actions taken for gameplay.
+**Controls:**
+- Arrow Keys / A & D: Move left and right
+- Spacebar: Activate power-up (when power-up is collected)
+- Mouse Click: Navigate menus and restart game
+- P Key: Pause game
 
-1. The user shall register to be able to login.
-2. The user shall login to be able to play a game.
-3. The user shall upload a valid deck file.
-4. The user shall upload a valid cards file.
-5. The user shall upload a valid abilities file.
-6. The user shall select which deck they will use in the game.
-7. The user shall select which deck the AI will use in the game.
-8. The system shall "flip a coin" to decide which player goes first.
-9. The system shall shuffle the user's deck.
-10. The system shall draw the top 7 cards from the user's deck.
-11. If the user does not have a Basic Pokémon in their hand the system shall "mulligan" until they do.
-12. Upon each mulligan, the AI shall draw a card.
-13. The user shall put one of their Basic Pokémon face down as their Active Pokémon.
-14. The user shall put up to 5 more Basic Pokémon face down on their Bench.
-15. Upon a new turn, the system shall draw a card from the deck of the current player.
-16. Upon a new turn, the system shall place the drawn card in the hand of the current player.
-17. The user shall put (up to 5 total) Basic Pokémon cards from their hand onto their Bench.
-18. The user shall Evolve their Pokémon as many times as they choose.
-19. The user shall attach an Energy card from their hand to one of their Pokémon once per turn.
-20. The user shall play Trainer cards (as many as they want, but only one Supporter card and one Stadium card per turn).
-21. The user shall Retreat their Active Pokémon once per turn.
-22. The user shall use as many Abilities as they choose.
-23. The user shall attack the opponent's Active Pokémon.
-24. After a player attacks, the system shall end their turn and start their opponent's turn.
-25. The system shall execute any "special conditions" after a turn is over.
-26. The user shall pick a Victory Card when the opposing Active Pokémon dies.
+## Requirements
 
-### 🤖 State Diagram
+1. The system shall randomly generate the initial platform layout.
+2. The player shall move left and right while airborne.
+3. The player shall automatically jump upon landing on a platform.
+4. The system shall implement screen wrapping for horizontal movement.
+5. The player shall collect power-ups for special abilities.
+6. The player shall shoot projectiles to defeat enemies (when weapon power-up is active).
+7. The player shall use gravity flip to reverse gravity temporarily.
+8. The system shall spawn platforms procedurally as the player climbs.
+9. The system shall spawn enemies on platforms and in the air.
+10. The system shall increase difficulty every 1000 meters.
+11. The player shall view current score, high score, and active power-ups on the HUD.
+12. The system shall detect collisions between player and platforms (top-only collision).
+13. The system shall detect collisions between player and enemies.
+14. The system shall detect collisions between projectiles and enemies.
+15. The system shall detect when the player falls off the bottom of the screen.
+16. The player shall pause the game and resume or quit to main menu.
+17. The system shall save high scores to local storage.
+18. The system shall save game state for resume functionality.
+19. The system shall award milestone medals at specific heights.
+20. The system shall display game over screen with final statistics.
+21. The player shall retry after game over or return to main menu.
+22. The player shall view instructions before starting the game.
+23. The player shall view high scores from the main menu.
+24. The system shall track combo multipliers for consecutive enemy defeats.
+25. The system shall unlock character skins based on achievements.
+26. The player shall continue playing infinitely after reaching gold medal.
 
-> [!note]
-> Remember that you'll need diagrams for not only game states but entity states as well.
+### State Diagrams
 
-![State Diagram](./assets/images/StateDiagram.png)
+#### Game State Machine
 
-### 🗺️ Class Diagram
+![Game State Diagram](./assets/images/GameStateDiagram.png)
+
+#### Player Entity State Machine
+
+![Player Entity State Diagram](./assets/images/PlayerEntityStateDiagram.png)
+
+#### Enemy Entity State Machine
+
+![Enemy Entity State Diagram](./assets/images/EnemyEntityStateDiagram.png)
+
+#### Class Diagram
 
 ![Class Diagram](./assets/images/ClassDiagram.png)
 
-### 🧵 Wireframes
 
-> [!note]
-> Your wireframes don't have to be super polished. They can even be black/white and hand drawn. I'm just looking for a rough idea about what you're visualizing.
+#### Wireframes
 
-![Main Menu](./assets/images/Main-Menu.png)
+#### Title Screen
+![Title Screen](./assets/images/TitleScreenWireframe.png)
 
--   _Let's Play_ will navigate to the main game.
--   _Upload Cards_ will navigation to the forms for uploading and parsing the data files for the game.
--   _Change Log_ will navigate the user to a page with a list of features/changes that have been implemented throughout the development of the game.
 
-![Game Board](./assets/images/Game-Board.png)
+#### Play State (Main Gameplay)
 
-We want to keep the GUI as simple and clear as possible by having cards with relevant images to act as a way for the user to intuitively navigate the game. We want to implement a layout that would look like as if one were playing a match of the Pokémon Trading Card Game with physical cards in real life. Clicking on any of the cards will reveal that card's details to the player.
+![Gameplay Screen](./assets/images/GameplayScreenWireframe.png)
+
+
+#### Game Over Screen
+![Game Over Screen](./assets/images/GameOverScreenWireframe.png)
+
+#### Victory State (Milestone Reached)
+![Milestone Screen](./assets/images/VictoryStateWireframe.png)
+
+
+#### Instructions Screen
+![Instructions Screen](./assets/images/InstructionsScreenWireframe.png)
 
 ### 🎨 Assets
 
-We used [app.diagrams.net](https://app.diagrams.net/) to create the wireframes. Wireframes are the equivalent to the skeleton of a web app since they are used to describe the functionality of the product and the users experience.
-
-We plan on following trends already found in other trading card video games, such as Pokémon Trading Card Game Online, Hearthstone, Magic the Gathering Arena, and Gwent.
-
-The GUI will be kept simple and playful, as to make sure the game is easy to understand what each component does and is, as well as light hearted to keep to the Pokémon theme.
-
 #### 🖼️ Images
 
--   Most images will be used from the well known community driven wikipedia site, [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page).
--   Especially their [Trading Card Game section](<https://bulbapedia.bulbagarden.net/wiki/Full_Art_card_(TCG)>).
+**Sources:**
+- [Kenney.nl](https://kenney.nl) - Space Shooter Asset Pack
+- [itch.io](https://itch.io) - Pixel Adventure Assets
+- [OpenGameArt](https://opengameart.org) - Platform Game Assets
+
+**Required Sprites:**
+- Player Character: Space-themed character sprite sheet with animations for idle, jumping, falling, shooting
+- Platforms: 4 types (normal, breakable, moving, bouncy) with different visual styles
+- Enemies: 2-3 enemy types (alien creature, flying saucer, space creature)
+- Power-ups: Icons for gravity flip, shield, double jump, weapon
+- Background: Parallax layers showing alien planet surface, atmosphere, and space
+- UI Elements: Hearts for health, buttons, score displays, medal icons
 
 #### ✏️ Fonts
 
-For fonts, a simple sans-serif like Roboto will look quite nice. It's a font that is legible, light on storage size, and fun to keep with the theme we're going for. We also used a more cartoonish Pokemon font for the title screen.
+- **Press Start 2P**: Retro pixel font for title and headers
+- **Orbitron**: Futuristic sans-serif for score and UI elements
+- **Roboto**: Clean and readable font for instructions
 
--   [Pokemon](https://www.dafont.com/pokemon.font)
--   [Roboto](https://fonts.google.com/specimen/Roboto)
+**Sources:**
+- [Google Fonts](https://fonts.google.com)
+- [DaFont](https://www.dafont.com) - Pixel Fonts
 
 #### 🔊 Sounds
 
-All sounds were taken from [freesound.org](https://freesound.org) for the actions pertaining to cards.
+**Sound Effects:**
+- Jump: Soft bounce/spring sound
+- Enemy Hit: Alien squeal or explosion
+- Power-up Collect: Chime or positive jingle
+- Shoot: Laser blast
+- Platform Break: Cracking sound
+- Game Over: Descending tone
+- Victory: Triumphant fanfare
+- Gravity Flip: Whoosh/swoosh sound
 
--   [Shuffle cards](https://freesound.org/people/VKProduktion/sounds/217502/)
--   [Flip card](https://freesound.org/people/Splashdust/sounds/84322/)
+**Music:**
+- Title Screen: Upbeat space-themed menu music
+- Gameplay: Energetic looping track that increases tempo as player climbs
+- Victory: Short celebratory jingle
+
+**Sources:**
+- [Freesound.org](https://freesound.org)
+- [OpenGameArt](https://opengameart.org) - Sound Effects
+- [Incompetech](https://incompetech.com) - Royalty Free Music
 
 ### 📚 References
 
--   [Pokemon Rulebook](http://assets.pokemon.com/assets/cms2/pdf/trading-card-game/rulebook/xy8-rulebook-en.pdf)
+- Doodle Jump - Core vertical platformer mechanics
+- Jetpack Joyride - Endless runner progression system
+- Super Mario Bros - Platform collision and enemy behavior patterns
