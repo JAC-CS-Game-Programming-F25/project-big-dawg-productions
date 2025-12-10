@@ -1,11 +1,15 @@
 /**
- * Game Name
+ * Cosmic Hopper
  *
- * Authors
+ * A vertical endless jumping game where players hop between platforms,
+ * collect power-ups, avoid enemies, and reach for the stars!
  *
- * Brief description
+ * Authors: [Your Name Here]
  *
- * Asset sources
+ * Asset sources:
+ * - Sprites: [To be added when assets are implemented]
+ * - Sounds: [To be added when audio is implemented]
+ * - Fonts: [To be added when fonts are implemented]
  */
 
 import GameStateName from './enums/GameStateName.js';
@@ -21,10 +25,12 @@ import {
 	sounds,
 	stateMachine,
 } from './globals.js';
+
+// Import all game states
+import TitleScreenState from './states/TitleScreenState.js';
 import PlayState from './states/PlayState.js';
 import GameOverState from './states/GameOverState.js';
 import VictoryState from './states/VictoryState.js';
-import TitleScreenState from './states/TitleScreenState.js';
 
 // Set the dimensions of the play area.
 canvas.width = CANVAS_WIDTH;
@@ -48,12 +54,14 @@ sounds.load(soundDefinitions);
 
 // Add all the states to the state machine.
 stateMachine.add(GameStateName.TitleScreen, new TitleScreenState());
+stateMachine.add(GameStateName.Play, new PlayState());
 stateMachine.add(GameStateName.GameOver, new GameOverState());
 stateMachine.add(GameStateName.Victory, new VictoryState());
-stateMachine.add(GameStateName.Play, new PlayState());
 
-stateMachine.change(GameStateName.Play);
+// Start with the title screen
+stateMachine.change(GameStateName.TitleScreen);
 
+// Create and start the game
 const game = new Game(
 	stateMachine,
 	context,

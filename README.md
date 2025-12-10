@@ -123,6 +123,7 @@ The core gameplay loop involves:
 - [Kenney.nl](https://kenney.nl) - Space Shooter Asset Pack
 - [itch.io](https://itch.io) - Pixel Adventure Assets
 - [OpenGameArt](https://opengameart.org) - Platform Game Assets
+- [itch.io](https://foozlecc.itch.io/cute-platformer-robot) - Robot Character
 
 **Required Sprites:**
 - Player Character: Space-themed character sprite sheet with animations for idle, jumping, falling, shooting
