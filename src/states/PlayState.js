@@ -1,5 +1,5 @@
 import BaseState from './BaseState.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, stateMachine } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, BRONZE_HEIGHT, SILVER_HEIGHT, GOLD_HEIGHT, stateMachine } from '../globals.js';
 import GameStateName from '../enums/GameStateName.js';
 import GameEntity from '../entities/GameEntity.js';
 import NormalPlatform from '../entities/platforms/NormalPlatform.js';
@@ -77,8 +77,19 @@ export default class PlayState extends BaseState {
                     this.onGround = false;
                 }
             }
-        }        // update height for scoring
-        this.score.updateHeight(this.player.y);
+		}
+		// update height for scoring
+		this.score.updateHeight(this.player.y);
+		// victory milestones
+		const baseY = CANVAS_HEIGHT - 60;
+		const height = this.score.getHeightAchieved(baseY);
+		if (height >= GOLD_HEIGHT) {
+			stateMachine.change(GameStateName.Victory, { milestone: 'Gold', height, score: this.score.score });
+		} else if (height >= SILVER_HEIGHT) {
+			// placeholder: could trigger Silver milestone state
+		} else if (height >= BRONZE_HEIGHT) {
+			// placeholder: could trigger Bronze milestone state
+		}
 
 		// horizontal screen wrap
 		if (this.player.right < -SCREEN_WRAP_BUFFER) {
@@ -97,10 +108,11 @@ export default class PlayState extends BaseState {
 		// generate more platforms above camera when needed
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
 
-		// check for game over (player falls too far below camera)
-		if (this.player.y > this.camera.y + CANVAS_HEIGHT + 200) {
-			// TODO: Change to GameOver state
-			console.log("Game Over - Player fell off screen!");
+		// check for game over when player fully off-screen below
+		if (this.player.top > this.camera.y + CANVAS_HEIGHT) {
+			const baseY = CANVAS_HEIGHT - 60;
+			const height = this.score.getHeightAchieved(baseY);
+			stateMachine.change(GameStateName.GameOver, { score: this.score.score, height });
 		}
 	}
 
