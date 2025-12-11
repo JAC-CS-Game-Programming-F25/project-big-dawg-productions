@@ -53,13 +53,13 @@ export default class TitleScreenState extends BaseState {
 		}
 
 		// Navigate menu up
-		if (input.isKeyPressed('ArrowUp')) {
+		if (input.isKeyPressed(KEYS.UP)) {
 			this.selectedOption = (this.selectedOption - 1 + this.menuOptions.length) % this.menuOptions.length;
 			this.keyPressed = true;
 		}
 		
 		// Navigate menu down
-		else if (input.isKeyPressed('ArrowDown')) {
+		else if (input.isKeyPressed(KEYS.DOWN)) {
 			this.selectedOption = (this.selectedOption + 1) % this.menuOptions.length;
 			this.keyPressed = true;
 		}

@@ -9,10 +9,10 @@ export default class Platform extends GameObject {
 
     // top-only collision check: entity falling onto platform
     collidesTop(entity, buffer = 5) {
-        const wasAbove = entity.vy > 0 && entity.bottom <= this.top + buffer;
+        const isFalling = entity.vy > 0;
         const withinX = entity.right > this.left && entity.left < this.right;
-        const intersectsY = entity.bottom >= this.top && entity.top <= this.bottom;
-        return wasAbove && withinX && intersectsY;
+        const crossedTop = entity.bottom >= this.top && entity.bottom <= this.top + this.height + buffer;
+        return isFalling && withinX && crossedTop;
     }
 
     onLand(entity) {

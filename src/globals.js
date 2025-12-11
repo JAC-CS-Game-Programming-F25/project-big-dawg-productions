@@ -87,13 +87,15 @@ export const UI_DANGER_COLOR = '#FF4444';
 
 // Input Keys
 export const KEYS = {
-	LEFT: 'ArrowLeft',
-	RIGHT: 'ArrowRight', 
-	JUMP: 'Space',
-	SHOOT: 'KeyX',
-	PAUSE: 'KeyP',
-	ENTER: 'Enter',
-	ESCAPE: 'Escape'
+	LEFT: Input.KEYS.ARROW_LEFT,
+	RIGHT: Input.KEYS.ARROW_RIGHT, 
+	UP: Input.KEYS.ARROW_UP,
+	DOWN: Input.KEYS.ARROW_DOWN,
+	JUMP: Input.KEYS.SPACE,
+	SHOOT: Input.KEYS.X,
+	PAUSE: Input.KEYS.P,
+	ENTER: Input.KEYS.ENTER,
+	ESCAPE: Input.KEYS.ESCAPE
 };
 
 // Color Palette
