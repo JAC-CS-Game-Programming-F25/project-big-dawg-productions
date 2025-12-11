@@ -3,10 +3,12 @@ import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SP
 import GameStateName from '../enums/GameStateName.js';
 import GameEntity from '../entities/GameEntity.js';
 import NormalPlatform from '../entities/platforms/NormalPlatform.js';
+import BouncyPlatform from '../entities/platforms/BouncyPlatform.js';
 import Camera from '../services/Camera.js';
 import PlatformGenerator from '../services/PlatformGenerator.js';
 import ScoreManager from '../services/ScoreManager.js';
 import HUD from '../ui/HUD.js';
+import MilestoneNotifier from '../ui/MilestoneNotifier.js';
 
 export default class PlayState extends BaseState {
 	constructor() {
@@ -19,11 +21,30 @@ export default class PlayState extends BaseState {
 		this.platforms = [];
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
-        this.score = new ScoreManager();
-        this.hud = new HUD(this.score);
+		this.score = new ScoreManager();
+		this.hud = new HUD(this.score);
+		this.notifier = new MilestoneNotifier();
+		this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
 	}
 
-	enter() {
+	enter(options = {}) {
+			const { resume = false } = options;
+
+			if (resume) {
+				// Do not reset; simply return to gameplay as-is
+				return;
+			}
+			// reset milestone tracking
+			this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
+			// reset player physics
+		this.player.vx = 0;
+		this.player.vy = 0;
+		this.player.ax = 0;
+		this.player.ay = 0;
+
+		// reset score and HUD
+		this.score.reset();
+
 		// seed some starting platforms
 		const baseY = CANVAS_HEIGHT - 60;
 		this.platforms = [
@@ -47,7 +68,7 @@ export default class PlayState extends BaseState {
 	update(dt) {
 		// Pause toggle
 		if (input.isKeyPressed(KEYS.PAUSE)) {
-			return stateMachine.change(GameStateName.Pause);
+			return stateMachine.change(GameStateName.Pause, { playState: this });
 		}
 
 		// horizontal movement
@@ -65,30 +86,42 @@ export default class PlayState extends BaseState {
 		this.player.update(dt);
 
         // platform collisions (top-only)
-        for (const p of this.platforms) {
+		for (const p of this.platforms) {
             if (p.collidesTop(this.player)) {
                 p.onLand(this.player);
-                this.onGround = true;
+				this.onGround = true;
                 this.score.add(POINTS_PER_PLATFORM);
                 
                 // auto-jump immediately after landing
-                if (!wasOnGround) {
-                    this.player.vy = this.jumpVelocity;
-                    this.onGround = false;
-                }
+				if (!wasOnGround) {
+					// If this is a bouncy platform, skip normal auto-jump;
+					// the platform's onLand already set a strong bounce.
+					if (p instanceof BouncyPlatform) {
+						this.onGround = false;
+					} else {
+						this.player.vy = this.jumpVelocity;
+						this.onGround = false;
+					}
+				}
             }
 		}
 		// update height for scoring
 		this.score.updateHeight(this.player.y);
-		// victory milestones
+		// victory milestones (one-time trigger per run)
 		const baseY = CANVAS_HEIGHT - 60;
 		const height = this.score.getHeightAchieved(baseY);
-		if (height >= GOLD_HEIGHT) {
-			stateMachine.change(GameStateName.Victory, { milestone: 'Gold', height, score: this.score.score });
-		} else if (height >= SILVER_HEIGHT) {
-			// placeholder: could trigger Silver milestone state
-		} else if (height >= BRONZE_HEIGHT) {
-			// placeholder: could trigger Bronze milestone state
+		if (height >= GOLD_HEIGHT && !this.milestonesShown.Gold) {
+			this.milestonesShown.Gold = true;
+			this.hud.currentMilestone = 'Gold';
+			this.notifier.trigger('Gold');
+		} else if (height >= SILVER_HEIGHT && !this.milestonesShown.Silver) {
+			this.milestonesShown.Silver = true;
+			this.hud.currentMilestone = 'Silver';
+			this.notifier.trigger('Silver');
+		} else if (height >= BRONZE_HEIGHT && !this.milestonesShown.Bronze) {
+			this.milestonesShown.Bronze = true;
+			this.hud.currentMilestone = 'Bronze';
+			this.notifier.trigger('Bronze');
 		}
 
 		// horizontal screen wrap
@@ -104,6 +137,8 @@ export default class PlayState extends BaseState {
 
 		// update camera to follow player upwards only
 		this.camera.follow(this.player, dt);
+		// update notifier
+		this.notifier.update(dt);
 
 		// generate more platforms above camera when needed
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
@@ -134,6 +169,8 @@ export default class PlayState extends BaseState {
 
 		// HUD
 		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60);
+		// Milestone notification banner
+		this.notifier.render(ctx);
 		
 		// Add controls hint in fixed position
 		ctx.save();

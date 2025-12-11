@@ -7,6 +7,7 @@ export default class PauseState extends BaseState {
         super();
         this.resumeHintPulse = 0;
         this.selectedOption = 0;
+        this.playState = null; // reference to current PlayState for background render
         this.menuOptions = [
             { text: 'RESUME', action: () => this.resume() },
             { text: 'QUIT TO MENU', action: () => this.quitToMenu() }
@@ -16,6 +17,7 @@ export default class PauseState extends BaseState {
     enter(params = {}) {
         this.resumeHintPulse = 0;
         this.selectedOption = 0;
+        this.playState = params.playState ?? null;
     }
 
     update(dt) {
@@ -41,6 +43,11 @@ export default class PauseState extends BaseState {
     }
 
     render(ctx) {
+        // Render the game behind the pause menu if available
+        if (this.playState && this.playState.render) {
+            this.playState.render(ctx);
+        }
+
         // Dim the background with overlay
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -78,7 +85,7 @@ export default class PauseState extends BaseState {
     }
 
     resume() {
-        stateMachine.change(GameStateName.Play);
+        stateMachine.change(GameStateName.Play, { resume: true });
     }
 
     quitToMenu() {

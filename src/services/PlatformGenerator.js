@@ -1,4 +1,4 @@
-import NormalPlatform from '../entities/platforms/NormalPlatform.js';
+import PlatformFactory from './PlatformFactory.js';
 import { CANVAS_WIDTH, PLATFORM_SPACING_MIN, PLATFORM_SPACING_MAX } from '../globals.js';
 
 export default class PlatformGenerator {
@@ -20,7 +20,9 @@ export default class PlatformGenerator {
     createPlatform(y) {
         const width = 100 + 80 * this.rng();
         const x = (CANVAS_WIDTH - width) * this.rng();
-        return new NormalPlatform({ x, y, width, height: 12 });
+        // Simple type selection: small chance for bouncy
+        const type = this.rng() < 0.15 ? 'bouncy' : 'normal';
+        return PlatformFactory.create(type, { x, y, width, height: 12 });
     }
 
     generateUntilAbove(cameraTop, platforms) {

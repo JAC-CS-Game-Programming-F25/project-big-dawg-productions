@@ -18,7 +18,8 @@ export default class VictoryState extends BaseState {
 
 	update(dt) {
 		if (input.isKeyPressed(KEYS.ENTER)) {
-			stateMachine.change(GameStateName.Play);
+			// Resume the current run instead of restarting
+			stateMachine.change(GameStateName.Play, { resume: true });
 		}
 	}
 
@@ -39,10 +40,4 @@ export default class VictoryState extends BaseState {
 		ctx.fillText('Press Enter to continue', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 80);
 	}
 }
-import State from "../../lib/State.js";
 
-export default class VictoryState extends State {
-	constructor() {
-		super();
-	}
-}
