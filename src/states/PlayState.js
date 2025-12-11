@@ -2,6 +2,8 @@ import BaseState from './BaseState.js';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN } from '../globals.js';
 import GameEntity from '../entities/GameEntity.js';
 import NormalPlatform from '../entities/platforms/NormalPlatform.js';
+import Camera from '../services/Camera.js';
+import PlatformGenerator from '../services/PlatformGenerator.js';
 
 export default class PlayState extends BaseState {
 	constructor() {
@@ -12,6 +14,8 @@ export default class PlayState extends BaseState {
 		this.jumpVelocity = -450;
 		this.onGround = true; // temporary until platforms exist
 		this.platforms = [];
+		this.camera = new Camera();
+		this.generator = new PlatformGenerator();
 	}
 
 	enter() {
@@ -23,6 +27,9 @@ export default class PlayState extends BaseState {
 			new NormalPlatform({ x: CANVAS_WIDTH - 260, y: baseY - PLATFORM_SPACING_MIN*2, width: 140, height: 12 }),
 		];
 		this.onGround = false;
+		// seed generator and ensure a buffer of platforms above
+		this.generator.seed(baseY);
+		this.generator.generateUntilAbove(this.camera.y, this.platforms);
 	}
 
 	update(dt) {
@@ -51,6 +58,12 @@ export default class PlayState extends BaseState {
 				this.onGround = true;
 			}
 		}
+
+		// update camera to follow player upwards only
+		this.camera.follow(this.player, dt);
+
+		// generate more platforms above camera when needed
+		this.generator.generateUntilAbove(this.camera.y, this.platforms);
 	}
 
 	render(ctx) {
@@ -58,13 +71,16 @@ export default class PlayState extends BaseState {
 		ctx.fillStyle = COLORS.BACKGROUND_SPACE;
 		ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-		// render platforms
+		// render platforms (convert world Y to screen Y)
+		ctx.save();
+		ctx.translate(0, -this.camera.y);
 		for (const p of this.platforms) {
 			p.render(ctx);
 		}
 
 		// player
 		this.player.render(ctx);
+		ctx.restore();
 
 		// HUD placeholder
 		ctx.fillStyle = UI_COLOR;
