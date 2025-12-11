@@ -1,6 +1,7 @@
 import BaseState from './BaseState.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN } from '../globals.js';
 import GameEntity from '../entities/GameEntity.js';
+import NormalPlatform from '../entities/platforms/NormalPlatform.js';
 
 export default class PlayState extends BaseState {
 	constructor() {
@@ -10,9 +11,19 @@ export default class PlayState extends BaseState {
 		this.gravity = 1000;
 		this.jumpVelocity = -450;
 		this.onGround = true; // temporary until platforms exist
+		this.platforms = [];
 	}
 
-	enter() {}
+	enter() {
+		// seed some starting platforms
+		const baseY = CANVAS_HEIGHT - 60;
+		this.platforms = [
+			new NormalPlatform({ x: CANVAS_WIDTH/2 - 80, y: baseY, width: 160, height: 12 }),
+			new NormalPlatform({ x: 120, y: baseY - PLATFORM_SPACING_MIN, width: 120, height: 12 }),
+			new NormalPlatform({ x: CANVAS_WIDTH - 260, y: baseY - PLATFORM_SPACING_MIN*2, width: 140, height: 12 }),
+		];
+		this.onGround = false;
+	}
 
 	update(dt) {
 		// horizontal movement
@@ -30,12 +41,15 @@ export default class PlayState extends BaseState {
 			this.onGround = false;
 		}
 
-		// temporary ground collision at bottom of screen
+		// update physics
 		this.player.update(dt);
-		if (this.player.bottom >= CANVAS_HEIGHT - 10) {
-			this.player.y = CANVAS_HEIGHT - 10 - this.player.height;
-			this.player.vy = 0;
-			this.onGround = true;
+
+		// platform collisions (top-only)
+		for (const p of this.platforms) {
+			if (p.collidesTop(this.player)) {
+				p.onLand(this.player);
+				this.onGround = true;
+			}
 		}
 	}
 
@@ -44,12 +58,10 @@ export default class PlayState extends BaseState {
 		ctx.fillStyle = COLORS.BACKGROUND_SPACE;
 		ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-		// ground line placeholder
-		ctx.strokeStyle = UI_COLOR;
-		ctx.beginPath();
-		ctx.moveTo(0, CANVAS_HEIGHT - 10);
-		ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT - 10);
-		ctx.stroke();
+		// render platforms
+		for (const p of this.platforms) {
+			p.render(ctx);
+		}
 
 		// player
 		this.player.render(ctx);
