@@ -6,11 +6,17 @@ export default class HUD {
     }
 
     render(ctx, cameraY, playerY, baseY) {
+        // Save context state before HUD rendering
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
+        
         ctx.fillStyle = UI_COLOR;
         ctx.font = `${UI_FONT_SIZE}px Arial`;
 
         const height = this.scoreManager.getHeightAchieved(baseY);
-        ctx.fillText(`Score: ${this.scoreManager.score}`, 20, 30);
-        ctx.fillText(`Height: ${Math.floor(height)} px`, 20, 60);
+        ctx.fillText(`Score: ${this.scoreManager.score}`, 80, 30);
+        ctx.fillText(`Height: ${Math.floor(height)} px`, 100, 60);
+        
+        ctx.restore();
     }
 }

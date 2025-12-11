@@ -152,4 +152,6 @@ export default class TitleScreenState extends BaseState {
 	showHighScores() {
 		stateMachine.change(GameStateName.HighScore);
 	}
+	
+	// Removed inline instructions; use Instructions state from menu instead.
 }

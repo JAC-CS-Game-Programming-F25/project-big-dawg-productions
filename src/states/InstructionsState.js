@@ -20,7 +20,7 @@ export default class InstructionsState extends BaseState {
 
         ctx.font = `${UI_FONT_SIZE}px Arial`;
         const lines = [
-            'Left/Right: Move',
+            'A/D: Move Left/Right',
             'Space: Jump',
             'P: Pause',
             'Reach higher platforms to increase your score.',

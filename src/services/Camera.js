@@ -7,14 +7,14 @@ export default class Camera {
 
     follow(target, dt) {
         const targetCenterY = target.y + target.height / 2;
-        const desiredTop = Math.max(0, targetCenterY - CANVAS_HEIGHT / 2);
-
-        // Only move camera upward when player goes above deadzone
-        if (targetCenterY < this.y + CANVAS_HEIGHT / 2 - CAMERA_DEADZONE_Y) {
-            this.y += (desiredTop - this.y) * Math.min(1, CAMERA_FOLLOW_SPEED * dt);
+        
+        // Camera should always follow player upward - track the highest point reached
+        const desiredCameraY = targetCenterY - CANVAS_HEIGHT / 2;
+        
+        // Only move camera up, never down (endless runner style)
+        if (desiredCameraY < this.y) {
+            this.y = desiredCameraY;
         }
-        // Never scroll down when player falls
-        this.y = Math.min(this.y, desiredTop);
     }
 
     worldToScreenY(y) {

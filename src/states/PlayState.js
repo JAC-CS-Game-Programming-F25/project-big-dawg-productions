@@ -1,5 +1,5 @@
 import BaseState from './BaseState.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, stateMachine } from '../globals.js';
 import GameStateName from '../enums/GameStateName.js';
 import GameEntity from '../entities/GameEntity.js';
 import NormalPlatform from '../entities/platforms/NormalPlatform.js';
@@ -35,6 +35,10 @@ export default class PlayState extends BaseState {
 		// spawn player above the first platform so they can land
 		this.player.x = CANVAS_WIDTH / 2 - 16;
 		this.player.y = baseY - 200;
+		
+		// reset camera to follow from player start position
+		this.camera.y = this.player.y - CANVAS_HEIGHT / 2;
+		
 		// seed generator and ensure a buffer of platforms above
 		this.generator.seed(baseY);
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
@@ -92,6 +96,12 @@ export default class PlayState extends BaseState {
 
 		// generate more platforms above camera when needed
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
+
+		// check for game over (player falls too far below camera)
+		if (this.player.y > this.camera.y + CANVAS_HEIGHT + 200) {
+			// TODO: Change to GameOver state
+			console.log("Game Over - Player fell off screen!");
+		}
 	}
 
 	render(ctx) {
@@ -112,5 +122,13 @@ export default class PlayState extends BaseState {
 
 		// HUD
 		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60);
+		
+		// Add controls hint in fixed position
+		ctx.save();
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.fillStyle = UI_COLOR;
+		ctx.font = '14px Arial';
+		ctx.fillText('A/D to move, P to pause', 120, CANVAS_HEIGHT - 20);
+		ctx.restore();
 	}
 }

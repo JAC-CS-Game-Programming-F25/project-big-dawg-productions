@@ -10,8 +10,8 @@ export const context =
 	canvas.getContext('2d') || new CanvasRenderingContext2D();
 
 // Canvas dimensions - 16:9 aspect ratio for modern screens
-export const CANVAS_WIDTH = 1280;
-export const CANVAS_HEIGHT = 720;
+export const CANVAS_WIDTH = 960;
+export const CANVAS_HEIGHT = 540;
 
 const resizeCanvas = () => {
 	const scaleX = window.innerWidth / CANVAS_WIDTH;
@@ -87,10 +87,10 @@ export const UI_DANGER_COLOR = '#FF4444';
 
 // Input Keys
 export const KEYS = {
-	LEFT: Input.KEYS.ARROW_LEFT,
-	RIGHT: Input.KEYS.ARROW_RIGHT, 
-	UP: Input.KEYS.ARROW_UP,
-	DOWN: Input.KEYS.ARROW_DOWN,
+	LEFT: Input.KEYS.A,
+	RIGHT: Input.KEYS.D, 
+	UP: Input.KEYS.W,
+	DOWN: Input.KEYS.S,
 	JUMP: Input.KEYS.SPACE,
 	SHOOT: Input.KEYS.X,
 	PAUSE: Input.KEYS.P,
