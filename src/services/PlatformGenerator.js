@@ -20,8 +20,11 @@ export default class PlatformGenerator {
     createPlatform(y) {
         const width = 100 + 80 * this.rng();
         const x = (CANVAS_WIDTH - width) * this.rng();
-        // Simple type selection: small chance for bouncy
-        const type = this.rng() < 0.15 ? 'bouncy' : 'normal';
+        // Type selection probabilities
+        const r = this.rng();
+        let type = 'normal';
+        if (r < 0.1) type = 'bouncy';
+        else if (r < 0.18) type = 'breakable';
         return PlatformFactory.create(type, { x, y, width, height: 12 });
     }
 

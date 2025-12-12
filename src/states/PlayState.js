@@ -4,6 +4,7 @@ import GameStateName from '../enums/GameStateName.js';
 import GameEntity from '../entities/GameEntity.js';
 import NormalPlatform from '../entities/platforms/NormalPlatform.js';
 import BouncyPlatform from '../entities/platforms/BouncyPlatform.js';
+import BreakablePlatform from '../entities/platforms/BreakablePlatform.js';
 import Camera from '../services/Camera.js';
 import PlatformGenerator from '../services/PlatformGenerator.js';
 import ScoreManager from '../services/ScoreManager.js';
@@ -97,8 +98,14 @@ export default class PlayState extends BaseState {
 					// If this is a bouncy platform, skip normal auto-jump;
 					// the platform's onLand already set a strong bounce.
 					if (p instanceof BouncyPlatform) {
+						// bouncy platforms handle their own strong bounce
+						this.onGround = false;
+					} else if (p instanceof BreakablePlatform) {
+						// smaller hop off breakable platforms
+						this.player.vy = this.jumpVelocity * 0.65;
 						this.onGround = false;
 					} else {
+						// normal auto-jump
 						this.player.vy = this.jumpVelocity;
 						this.onGround = false;
 					}
@@ -133,7 +140,13 @@ export default class PlayState extends BaseState {
 		}
 
 		// cleanup platforms far below camera
-		this.platforms = this.platforms.filter(p => (p.y - this.camera.y) > -ENTITY_CLEANUP_DISTANCE);
+		for (const p of this.platforms) {
+			if (typeof p.update === 'function') {
+				p.update(1/60);
+			}
+		}
+		// cleanup platforms far below camera or marked dead
+		this.platforms = this.platforms.filter(p => p.isAlive && (p.y - this.camera.y) > -ENTITY_CLEANUP_DISTANCE);
 
 		// update camera to follow player upwards only
 		this.camera.follow(this.player, dt);
