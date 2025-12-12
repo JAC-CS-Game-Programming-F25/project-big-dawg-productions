@@ -23,9 +23,16 @@ export default class PlatformGenerator {
         // Type selection probabilities
         const r = this.rng();
         let type = 'normal';
-        if (r < 0.1) type = 'bouncy';
-        else if (r < 0.18) type = 'breakable';
-        return PlatformFactory.create(type, { x, y, width, height: 12 });
+        if (r < 0.08) type = 'bouncy';
+        else if (r < 0.16) type = 'breakable';
+        else if (r < 0.24) type = 'moving';
+        // Moving platforms get a default speed/range tuned to width
+        const options = { x, y, width, height: 12 };
+        if (type === 'moving') {
+            options.speed = 60 + 60 * this.rng();
+            options.range = 80 + 80 * this.rng();
+        }
+        return PlatformFactory.create(type, options);
     }
 
     generateUntilAbove(cameraTop, platforms) {
