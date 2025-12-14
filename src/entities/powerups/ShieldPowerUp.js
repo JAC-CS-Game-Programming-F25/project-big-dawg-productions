@@ -7,8 +7,14 @@ export default class ShieldPowerUp extends PowerUp {
     }
 
     applyTo(player, playState) {
+        // If currently immune, do not allow picking up another shield
+        if (playState.playerInvulnerableTimer > 0) {
+            return; // leave power-up so it can be picked up later
+        }
         // Grant one-hit shield
         playState.playerShieldActive = true;
+        // clear any existing immunity just in case
+        playState.playerInvulnerableTimer = 0;
         this.isAlive = false;
     }
 

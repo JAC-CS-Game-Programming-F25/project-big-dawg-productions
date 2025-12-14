@@ -24,6 +24,8 @@ export default class PlayState extends BaseState {
 		this.platforms = [];
 		this.enemies = [];
 		this.powerUps = [];
+		this.playerShieldActive = false;
+		this.playerInvulnerableTimer = 0; // seconds of post-hit immunity
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
@@ -106,6 +108,11 @@ export default class PlayState extends BaseState {
 		// gravity
 		this.player.ay = this.gravity;
 
+		// tick down post-hit immunity
+		if (this.playerInvulnerableTimer > 0) {
+			this.playerInvulnerableTimer = Math.max(0, this.playerInvulnerableTimer - dt);
+		}
+
         // auto-jump when landing on platform
         let wasOnGround = this.onGround;
         this.onGround = false;		// update physics
@@ -116,13 +123,21 @@ export default class PlayState extends BaseState {
 			e.update(dt);
 		}
 
-		// update power-ups
+		// update power-ups (static for now)
 		for (const pu of this.powerUps) {
-			// power-ups are static; no update needed for now
+			// no movement needed
 		}
 
 		// despawn enemies that have fallen below the bottom of the screen or are dead
 		this.enemies = this.enemies.filter(e => e.isAlive && e.y <= this.camera.y + CANVAS_HEIGHT + 200);
+
+		// collect power-ups and cleanup off-screen
+		for (const pu of this.powerUps) {
+			if (this.player.intersects(pu)) {
+				pu.applyTo(this.player, this);
+			}
+		}
+		this.powerUps = this.powerUps.filter(pu => pu.isAlive && pu.y <= this.camera.y + CANVAS_HEIGHT + 200);
 
         // platform collisions (top-only)
 		for (const p of this.platforms) {
@@ -194,10 +209,14 @@ export default class PlayState extends BaseState {
 		// enemy collisions: touching enemy ends the run
 		for (const e of this.enemies) {
 			if (this.player.intersects(e)) {
+				// ignore collisions while invulnerable
+				if (this.playerInvulnerableTimer > 0) {
+					continue;
+				}
 				if (this.playerShieldActive) {
-					// consume shield and survive the hit
+					// consume shield and grant 3s immunity
 					this.playerShieldActive = false;
-					// optionally mark enemy dead or knockback; keep simple: leave enemy
+					this.playerInvulnerableTimer = 3.0;
 					continue;
 				}
 				const baseY2 = CANVAS_HEIGHT - 60;
@@ -266,16 +285,22 @@ export default class PlayState extends BaseState {
 	}
 
 	spawnPowerUpsUntilAbove(cameraY) {
-		const targetY = cameraY - CANVAS_HEIGHT;
-		if (this.lastPowerUpSpawnY === null) this.lastPowerUpSpawnY = cameraY + CANVAS_HEIGHT;
-		while (this.lastPowerUpSpawnY > targetY) {
-			const band = 300 + 200 * Math.random();
-			this.lastPowerUpSpawnY -= band;
-			// for now, only shield
-			const w = 24, h = 24;
-			const x = Math.max(0, Math.min(CANVAS_WIDTH - w, Math.random() * (CANVAS_WIDTH - w)));
-			this.powerUps.push(PowerUpFactory.create('shield', { x, y: this.lastPowerUpSpawnY, width: w, height: h }));
+		// Spawn with a 5% chance per platform within one screen above the camera
+		const topBound = cameraY - CANVAS_HEIGHT;
+		const bottomBound = this.lastPowerUpSpawnY ?? (cameraY + CANVAS_HEIGHT);
+		const w = 24, h = 24;
+		for (const p of this.platforms) {
+			if (p.y <= bottomBound && p.y >= topBound) {
+				if (Math.random() < 0.05) {
+					const offsetX = Math.random() * Math.max(0, p.width - w);
+					const x = p.x + offsetX;
+					const y = p.y - h;
+					this.powerUps.push(PowerUpFactory.create('shield', { x, y, width: w, height: h }));
+				}
+			}
 		}
+		// advance the last considered band so we don't resample same region repeatedly
+		this.lastPowerUpSpawnY = topBound;
 	}
 
 	render(ctx) {
@@ -290,6 +315,11 @@ export default class PlayState extends BaseState {
 			p.render(ctx);
 		}
 
+		// power-ups
+		for (const pu of this.powerUps) {
+			pu.render(ctx);
+		}
+
 		// enemies
 		for (const e of this.enemies) {
 			e.render(ctx);
@@ -300,7 +330,7 @@ export default class PlayState extends BaseState {
 		ctx.restore();
 
 		// HUD
-		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60);
+		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60, { immunitySeconds: this.playerInvulnerableTimer, shieldReady: this.playerShieldActive });
 		// Milestone notification banner
 		this.notifier.render(ctx);
 		

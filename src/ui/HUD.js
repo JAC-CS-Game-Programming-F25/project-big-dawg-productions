@@ -6,7 +6,7 @@ export default class HUD {
         this.currentMilestone = null; // 'Bronze' | 'Silver' | 'Gold' | null
     }
 
-    render(ctx, cameraY, playerY, baseY) {
+    render(ctx, cameraY, playerY, baseY, { immunitySeconds = 0, shieldReady = false } = {}) {
         // Save context state before HUD rendering
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
@@ -21,9 +21,15 @@ export default class HUD {
         // Milestone reached indicator
         ctx.fillText(`Milestone: ${this.currentMilestone || 'None'}`, 120, 90);
 
-        // Shield indicator
-        const shieldText = playState?.playerShieldActive ? 'Shield: Active' : 'Shield: None';
-        ctx.fillText(shieldText, 120, 120);
+        // Immunity indicator: show Active when shield is ready; countdown when timer running; None otherwise
+        if (immunitySeconds > 0) {
+            const secs = Math.max(0, immunitySeconds).toFixed(1);
+            ctx.fillText(`Immunity: ${secs}s`, 120, 120);
+        } else if (shieldReady) {
+            ctx.fillText('Immunity: Active', 120, 120);
+        } else {
+            ctx.fillText('Immunity: None', 120, 120);
+        }
         
         ctx.restore();
     }
