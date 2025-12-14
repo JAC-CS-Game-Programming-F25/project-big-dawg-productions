@@ -1,7 +1,8 @@
 import BaseState from './BaseState.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, BRONZE_HEIGHT, SILVER_HEIGHT, GOLD_HEIGHT, stateMachine } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, POINTS_PER_ENEMY_KILL, BRONZE_HEIGHT, SILVER_HEIGHT, GOLD_HEIGHT, stateMachine } from '../globals.js';
 import GameStateName from '../enums/GameStateName.js';
 import GameEntity from '../entities/GameEntity.js';
+import Projectile from '../entities/Projectile.js';
 import NormalPlatform from '../entities/platforms/NormalPlatform.js';
 import BouncyPlatform from '../entities/platforms/BouncyPlatform.js';
 import BreakablePlatform from '../entities/platforms/BreakablePlatform.js';
@@ -24,12 +25,15 @@ export default class PlayState extends BaseState {
 		this.platforms = [];
 		this.enemies = [];
 		this.powerUps = [];
+		this.projectiles = [];
 		this.playerShieldActive = false;
 		this.playerInvulnerableTimer = 0; // seconds of post-hit immunity
 		this.doubleJumpTimer = 0; // seconds double jump is available
 		this.canDoubleJump = false; // whether a mid-air jump is available right now
 		this.gravityFlipTimer = 0; // seconds gravity is flipped
 		this.gravityFlipped = false;
+		this.weaponTimer = 0; // seconds shooting is enabled
+		this.canShoot = false;
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
@@ -53,6 +57,7 @@ export default class PlayState extends BaseState {
 			this.lastEnemySpawnY = null;
 			// reset power-ups and all effect flags/timers
 			this.powerUps = [];
+			this.projectiles = [];
 			this.lastPowerUpSpawnY = null;
 			this.playerShieldActive = false;
 			this.playerInvulnerableTimer = 0;
@@ -60,6 +65,8 @@ export default class PlayState extends BaseState {
 			this.canDoubleJump = false;
 			this.gravityFlipTimer = 0;
 			this.gravityFlipped = false;
+			this.weaponTimer = 0;
+			this.canShoot = false;
 			// reset player physics
 		this.player.vx = 0;
 		this.player.vy = 0;
@@ -126,6 +133,13 @@ export default class PlayState extends BaseState {
 			}
 		}
 
+		// shooting input
+		if (input.isKeyPressed(KEYS.SHOOT) && this.canShoot) {
+			const dirY = -1; // shoot upward relative to screen
+			const speed = 700;
+			this.projectiles.push(new Projectile({ x: this.player.x + this.player.width/2 - 3, y: this.player.y, width: 6, height: 10, vx: 0, vy: dirY * speed }));
+		}
+
 		// gravity (quarter strength when flipped for easier control)
 		this.player.ay = this.gravityFlipped ? -(Math.abs(this.gravity) * 0.25) : Math.abs(this.gravity);
 
@@ -153,9 +167,17 @@ export default class PlayState extends BaseState {
 			e.update(dt);
 		}
 
-		// update power-ups (static for now)
+		// update power-ups; if attached to moving platform, follow it
 		for (const pu of this.powerUps) {
-			// no movement needed
+			if (pu.attachPlatform) {
+				pu.x = pu.attachPlatform.x + (pu.attachOffsetX || 0);
+				pu.y = pu.attachPlatform.y - pu.height;
+			}
+		}
+
+		// update projectiles
+		for (const b of this.projectiles) {
+			b.update(dt);
 		}
 
 		// despawn enemies that have fallen below the bottom of the screen or are dead
@@ -168,6 +190,8 @@ export default class PlayState extends BaseState {
 			}
 		}
 		this.powerUps = this.powerUps.filter(pu => pu.isAlive && pu.y <= this.camera.y + CANVAS_HEIGHT + 200);
+		// despawn projectiles off-screen
+		this.projectiles = this.projectiles.filter(b => b.y >= this.camera.y - 100 && b.y <= this.camera.y + CANVAS_HEIGHT + 100);
 
         // platform collisions (top-only)
 		for (const p of this.platforms) {
@@ -255,6 +279,12 @@ export default class PlayState extends BaseState {
 			}
 		}
 
+		// tick down weapon timer
+		if (this.weaponTimer > 0) {
+			this.weaponTimer = Math.max(0, this.weaponTimer - dt);
+			this.canShoot = this.weaponTimer > 0;
+		}
+
 		// enemy collisions: touching enemy ends the run
 		for (const e of this.enemies) {
 			if (this.player.intersects(e)) {
@@ -273,6 +303,19 @@ export default class PlayState extends BaseState {
 				return stateMachine.change(GameStateName.GameOver, { score: this.score.score, height: height2 });
 			}
 		}
+
+		// projectile vs enemy collisions
+		for (const b of this.projectiles) {
+			for (const e of this.enemies) {
+				if (b.isAlive && e.isAlive && b.intersects(e)) {
+					b.isAlive = false;
+					e.isAlive = false;
+					this.score.add(POINTS_PER_ENEMY_KILL);
+				}
+			}
+		}
+		this.projectiles = this.projectiles.filter(b => b.isAlive);
+		this.enemies = this.enemies.filter(e => e.isAlive);
 
 		// generate more platforms above camera when needed
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
@@ -341,13 +384,24 @@ export default class PlayState extends BaseState {
 		for (const p of this.platforms) {
 			if (p.y <= bottomBound && p.y >= topBound) {
 				if (Math.random() < 0.05) {
+					// avoid spawning a power-up on a platform that has a ground enemy
+					const hasGroundEnemy = this.enemies.some(e => e.platform === p && e.isAlive);
+					if (hasGroundEnemy) continue;
 					const offsetX = Math.random() * Math.max(0, p.width - w);
 					const x = p.x + offsetX;
 					const y = p.y - h;
-					// randomly choose a power-up type (shield, double jump, gravity flip)
+					// randomly choose a power-up type (shield, double jump, gravity flip, weapon)
 					const r = Math.random();
-					const type = r < 0.34 ? 'shield' : (r < 0.67 ? 'doubleJump' : 'gravityFlip');
-					this.powerUps.push(PowerUpFactory.create(type, { x, y, width: w, height: h }));
+					let type = 'shield';
+					if (r < 0.25) type = 'shield';
+					else if (r < 0.5) type = 'doubleJump';
+					else if (r < 0.75) type = 'gravityFlip';
+					else type = 'weapon';
+					const pu = PowerUpFactory.create(type, { x, y, width: w, height: h });
+					// attach to platform so it moves with it
+					pu.attachPlatform = p;
+					pu.attachOffsetX = offsetX;
+					this.powerUps.push(pu);
 				}
 			}
 		}
@@ -383,6 +437,11 @@ export default class PlayState extends BaseState {
 			e.render(ctx);
 		}
 
+		// projectiles
+		for (const b of this.projectiles) {
+			b.render(ctx);
+		}
+
 		// player
 		this.player.render(ctx);
 		ctx.restore();
@@ -397,7 +456,7 @@ export default class PlayState extends BaseState {
 		}
 
 		// HUD
-		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60, { immunitySeconds: this.playerInvulnerableTimer, shieldReady: this.playerShieldActive });
+		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60, { immunitySeconds: this.playerInvulnerableTimer, shieldReady: this.playerShieldActive, weaponSeconds: this.weaponTimer });
 		// Milestone notification banner
 		this.notifier.render(ctx);
 		

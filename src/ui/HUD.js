@@ -6,7 +6,7 @@ export default class HUD {
         this.currentMilestone = null; // 'Bronze' | 'Silver' | 'Gold' | null
     }
 
-    render(ctx, cameraY, playerY, baseY, { immunitySeconds = 0, shieldReady = false } = {}) {
+    render(ctx, cameraY, playerY, baseY, { immunitySeconds = 0, shieldReady = false, weaponSeconds = 0 } = {}) {
         // Save context state before HUD rendering
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
@@ -29,6 +29,14 @@ export default class HUD {
             ctx.fillText('Immunity: Active', 120, 120);
         } else {
             ctx.fillText('Immunity: None', 120, 120);
+        }
+
+        // Weapon countdown when active
+        if (weaponSeconds > 0) {
+            const wsecs = Math.max(0, weaponSeconds).toFixed(1);
+            ctx.fillText(`Weapon: ${wsecs}s`, 120, 150);
+        } else {
+            ctx.fillText('Weapon: Inactive', 120, 150);
         }
         
         ctx.restore();
