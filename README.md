@@ -57,7 +57,7 @@ The core gameplay loop involves:
 7. The player shall use gravity flip to reverse gravity temporarily.
 8. The system shall spawn platforms procedurally as the player climbs.
 9. The system shall spawn enemies on platforms and in the air.
-10. The system shall increase difficulty every 1000 meters.
+10. The system shall increase difficulty every milestone reached.
 11. The player shall view current score, high score, and active power-ups on the HUD.
 12. The system shall detect collisions between player and platforms (top-only collision).
 13. The system shall detect collisions between player and enemies.
@@ -71,9 +71,9 @@ The core gameplay loop involves:
 21. The player shall retry after game over or return to main menu.
 22. The player shall view instructions before starting the game.
 23. The player shall view high scores from the main menu.
-24. The system shall track combo multipliers for consecutive enemy defeats.
-25. The system shall unlock character skins based on achievements.
-26. The player shall continue playing infinitely after reaching gold medal.
+24. The player shall continue playing infinitely after reaching gold medal.
+
+
 
 ### State Diagrams
 
