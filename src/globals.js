@@ -65,7 +65,7 @@ export const DEATH_BOUNDARY = CANVAS_HEIGHT + 200; // How far below screen playe
 export const SHIELD_DURATION = 8;
 export const DOUBLE_JUMP_DURATION = 10;
 export const WEAPON_DURATION = 12;
-export const GRAVITY_FLIP_DURATION = 6;
+export const GRAVITY_FLIP_DURATION = 3; // Short, snappy flip effect
 
 // Scoring System
 export const POINTS_PER_PLATFORM = 10;
@@ -107,7 +107,7 @@ export const COLORS = {
 	PLATFORM_BREAKABLE: '#e74c3c',
 	PLATFORM_MOVING: '#f39c12',
 	PLATFORM_BOUNCY: '#2ecc71',
-	ENEMY_GROUND: '#8e44ad',
+	ENEMY_GROUND: '#FFD700',
 	ENEMY_FLYING: '#e67e22',
 	POWERUP_SHIELD: '#3498db',
 	POWERUP_WEAPON: '#e74c3c',

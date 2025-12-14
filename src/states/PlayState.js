@@ -28,6 +28,8 @@ export default class PlayState extends BaseState {
 		this.playerInvulnerableTimer = 0; // seconds of post-hit immunity
 		this.doubleJumpTimer = 0; // seconds double jump is available
 		this.canDoubleJump = false; // whether a mid-air jump is available right now
+		this.gravityFlipTimer = 0; // seconds gravity is flipped
+		this.gravityFlipped = false;
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
@@ -49,6 +51,15 @@ export default class PlayState extends BaseState {
 			// reset enemy spawning + clear existing enemies
 			this.enemies = [];
 			this.lastEnemySpawnY = null;
+			// reset power-ups and all effect flags/timers
+			this.powerUps = [];
+			this.lastPowerUpSpawnY = null;
+			this.playerShieldActive = false;
+			this.playerInvulnerableTimer = 0;
+			this.doubleJumpTimer = 0;
+			this.canDoubleJump = false;
+			this.gravityFlipTimer = 0;
+			this.gravityFlipped = false;
 			// reset player physics
 		this.player.vx = 0;
 		this.player.vy = 0;
@@ -79,7 +90,7 @@ export default class PlayState extends BaseState {
 
 		// enemies are gated by milestones; do not spawn at start
 
-		// initialize enemy spawn tracking
+		// initialize spawn tracking
 		this.lastEnemySpawnY = baseY;
 		this.lastPowerUpSpawnY = baseY;
 	}
@@ -115,12 +126,21 @@ export default class PlayState extends BaseState {
 			}
 		}
 
-		// gravity
-		this.player.ay = this.gravity;
+		// gravity (quarter strength when flipped for easier control)
+		this.player.ay = this.gravityFlipped ? -(Math.abs(this.gravity) * 0.25) : Math.abs(this.gravity);
 
-		// tick down post-hit immunity
+		// tick down post-hit immunity; when it ends, stop the character
 		if (this.playerInvulnerableTimer > 0) {
+			const prev = this.playerInvulnerableTimer;
 			this.playerInvulnerableTimer = Math.max(0, this.playerInvulnerableTimer - dt);
+			if (prev > 0 && this.playerInvulnerableTimer === 0) {
+				// Drastically slow the character instead of full stop
+				this.player.vx *= 0.1;
+				this.player.vy *= 0.1;
+				this.player.ax = 0;
+				// restore normal gravity immediately after slowdown
+				this.player.ay = this.gravityFlipped ? -Math.abs(this.gravity) : Math.abs(this.gravity);
+			}
 		}
 
         // auto-jump when landing on platform
@@ -227,6 +247,14 @@ export default class PlayState extends BaseState {
 			if (this.doubleJumpTimer === 0) this.canDoubleJump = false;
 		}
 
+		// tick down gravity flip timer
+		if (this.gravityFlipTimer > 0) {
+			this.gravityFlipTimer = Math.max(0, this.gravityFlipTimer - dt);
+			if (this.gravityFlipTimer === 0) {
+				this.gravityFlipped = false;
+			}
+		}
+
 		// enemy collisions: touching enemy ends the run
 		for (const e of this.enemies) {
 			if (this.player.intersects(e)) {
@@ -235,9 +263,9 @@ export default class PlayState extends BaseState {
 					continue;
 				}
 				if (this.playerShieldActive) {
-					// consume shield and grant 3s immunity
+					// consume shield and grant 2s immunity
 					this.playerShieldActive = false;
-					this.playerInvulnerableTimer = 3.0;
+					this.playerInvulnerableTimer = 2.0;
 					continue;
 				}
 				const baseY2 = CANVAS_HEIGHT - 60;
@@ -316,8 +344,9 @@ export default class PlayState extends BaseState {
 					const offsetX = Math.random() * Math.max(0, p.width - w);
 					const x = p.x + offsetX;
 					const y = p.y - h;
-					// randomly choose a power-up type (currently shield or double jump)
-					const type = Math.random() < 0.5 ? 'shield' : 'doubleJump';
+					// randomly choose a power-up type (shield, double jump, gravity flip)
+					const r = Math.random();
+					const type = r < 0.34 ? 'shield' : (r < 0.67 ? 'doubleJump' : 'gravityFlip');
 					this.powerUps.push(PowerUpFactory.create(type, { x, y, width: w, height: h }));
 				}
 			}
@@ -331,8 +360,14 @@ export default class PlayState extends BaseState {
 		ctx.fillStyle = COLORS.BACKGROUND_SPACE;
 		ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-		// render platforms (convert world Y to screen Y)
+		// render world (optionally visually flipped during gravity flip)
 		ctx.save();
+		if (this.gravityFlipped) {
+			// Flip the screen vertically for a strong visual effect
+			ctx.translate(0, CANVAS_HEIGHT);
+			ctx.scale(1, -1);
+		}
+		// convert world Y to screen Y by translating camera
 		ctx.translate(0, -this.camera.y);
 		for (const p of this.platforms) {
 			p.render(ctx);
@@ -351,6 +386,15 @@ export default class PlayState extends BaseState {
 		// player
 		this.player.render(ctx);
 		ctx.restore();
+
+		// optional subtle overlay while flipped
+		if (this.gravityFlipped) {
+			ctx.save();
+			ctx.setTransform(1, 0, 0, 1, 0, 0);
+			ctx.fillStyle = 'rgba(155, 89, 182, 0.15)'; // light purple tint
+			ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+			ctx.restore();
+		}
 
 		// HUD
 		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60, { immunitySeconds: this.playerInvulnerableTimer, shieldReady: this.playerShieldActive });
