@@ -1,10 +1,18 @@
+import Vector from '../../lib/Vector.js';
+
 export default class GameObject {
-	constructor({ x = 0, y = 0, width = 0, height = 0, sprite = null } = {}) {
+	constructor({ x = 0, y = 0, width = 0, height = 0, sprites = [], sprite = null } = {}) {
+		// Core composition per architecture: position and dimensions as Vectors
+		this.position = new Vector(x, y);
+		this.dimensions = new Vector(width, height);
+		// Maintain scalar mirrors for existing code
 		this.x = x;
 		this.y = y;
 		this.width = width;
 		this.height = height;
-		this.sprite = sprite; // placeholder, to be used once assets wired
+		// Sprites collection and current sprite adapter
+		this.sprites = sprites;
+		this.sprite = sprite;
 		this.isAlive = true;
 	}
 
@@ -34,5 +42,8 @@ export default class GameObject {
 			ctx.fillStyle = '#888888';
 			ctx.fillRect(this.x, this.y, this.width, this.height);
 		}
+		// Keep vectors in sync with scalars in case external code changed them
+		this.position.set(this.x, this.y);
+		this.dimensions.set(this.width, this.height);
 	}
 }

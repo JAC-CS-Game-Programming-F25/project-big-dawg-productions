@@ -7,11 +7,16 @@ export default class FlyingEnemy extends Enemy {
     }
 
     update(dt) {
-        this.vx = this.direction * this.speed;
+        this.hover(dt);
         super.update(dt);
         // reverse at screen bounds
         if (this.x < 0) { this.x = 0; this.direction = 1; }
         if (this.x + this.width > CANVAS_WIDTH) { this.x = CANVAS_WIDTH - this.width; this.direction = -1; }
+    }
+
+    hover(dt) {
+        // simple hover: horizontal patrol
+        this.vx = this.direction * this.speed;
     }
 
     render(ctx) {

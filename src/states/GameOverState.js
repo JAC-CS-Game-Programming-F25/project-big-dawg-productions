@@ -7,6 +7,12 @@ export default class GameOverState extends BaseState {
         super();
         this.finalScore = 0;
         this.height = 0;
+        this.selectedOption = 0;
+        this.menuOptions = [
+            { text: 'RETRY', action: () => stateMachine.change(GameStateName.Play) },
+            { text: 'MAIN MENU', action: () => stateMachine.change(GameStateName.TitleScreen) },
+            { text: 'VIEW SCORES', action: () => stateMachine.change(GameStateName.HighScore) }
+        ];
     }
 
     enter({ score = 0, height = 0 } = {}) {
@@ -24,8 +30,17 @@ export default class GameOverState extends BaseState {
     }
 
     update(dt) {
+        // Navigate menu
+        if (input.isKeyPressed(KEYS.UP)) {
+            this.selectedOption = (this.selectedOption - 1 + this.menuOptions.length) % this.menuOptions.length;
+        }
+        else if (input.isKeyPressed(KEYS.DOWN)) {
+            this.selectedOption = (this.selectedOption + 1) % this.menuOptions.length;
+        }
+
+        // Select option
         if (input.isKeyPressed(KEYS.ENTER)) {
-            stateMachine.change(GameStateName.TitleScreen);
+            this.menuOptions[this.selectedOption].action();
         }
     }
 
@@ -36,13 +51,32 @@ export default class GameOverState extends BaseState {
         ctx.fillStyle = UI_COLOR;
         ctx.textAlign = 'center';
         ctx.font = `${UI_LARGE_FONT_SIZE}px Arial`;
-        ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, 140);
+        // Move title higher
+        ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, 110);
 
         ctx.font = `${UI_FONT_SIZE}px Arial`;
-        ctx.fillText(`Score: ${this.finalScore}`, CANVAS_WIDTH / 2, 220);
-        ctx.fillText(`Height: ${Math.floor(this.height)} px`, CANVAS_WIDTH / 2, 260);
+        // Move metrics higher
+        const scoreY = 180;
+        const heightY = 220;
+        ctx.fillText(`Score: ${this.finalScore}`, CANVAS_WIDTH / 2, scoreY);
+        ctx.fillText(`Height: ${Math.floor(this.height)} px`, CANVAS_WIDTH / 2, heightY);
 
-        ctx.fillStyle = UI_HIGHLIGHT_COLOR;
-        ctx.fillText('Press Enter to go back to Main Menu', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 80);
+        // Menu options
+        // Restore menu start closer to middle
+        const menuStartY = CANVAS_HEIGHT / 2 + 20;
+        const menuSpacing = 50;
+        this.menuOptions.forEach((option, index) => {
+            const y = menuStartY + (index * menuSpacing);
+            const isSelected = index === this.selectedOption;
+            if (isSelected) {
+                ctx.fillStyle = UI_HIGHLIGHT_COLOR;
+                ctx.fillRect(CANVAS_WIDTH / 2 - 140, y - 22, 280, 38);
+            }
+            ctx.fillStyle = isSelected ? COLORS.BACKGROUND_SPACE : UI_COLOR;
+            ctx.fillText(option.text, CANVAS_WIDTH / 2, y);
+        });
+
+        ctx.fillStyle = UI_COLOR;
+        ctx.fillText('Use ↑↓ to navigate, Enter to select', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 60);
     }
 }

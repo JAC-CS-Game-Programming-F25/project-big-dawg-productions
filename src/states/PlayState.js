@@ -1,7 +1,10 @@
 import BaseState from './BaseState.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, POINTS_PER_ENEMY_KILL, BRONZE_HEIGHT, SILVER_HEIGHT, GOLD_HEIGHT, stateMachine } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, POINTS_PER_ENEMY_KILL, BRONZE_HEIGHT, SILVER_HEIGHT, GOLD_HEIGHT, stateMachine, images, ANIMATION_FPS } from '../globals.js';
 import GameStateName from '../enums/GameStateName.js';
-import GameEntity from '../entities/GameEntity.js';
+import Player from '../entities/Player.js';
+import Animation from '../../lib/Animation.js';
+import Easing from '../../lib/Easing.js';
+import Sprite from '../../lib/Sprite.js';
 import Projectile from '../entities/Projectile.js';
 import NormalPlatform from '../entities/platforms/NormalPlatform.js';
 import BouncyPlatform from '../entities/platforms/BouncyPlatform.js';
@@ -17,7 +20,36 @@ import MilestoneNotifier from '../ui/MilestoneNotifier.js';
 export default class PlayState extends BaseState {
 	constructor() {
 		super();
-		this.player = new GameEntity({ x: CANVAS_WIDTH / 2 - 16, y: CANVAS_HEIGHT - 80, width: 32, height: 48 });
+		// Initialize player; width/height will be aligned to sprite dimensions once images load
+		this.player = new Player({ x: CANVAS_WIDTH / 2 - 45, y: CANVAS_HEIGHT - 120, width: 90, height: 90 });
+
+		// Setup player jump animation using 21 individual images loaded in config
+		const frameNames = Array.from({ length: 21 }, (_, i) => `char_jump_${String(i).padStart(2, '0')}`);
+		const loaded = frameNames.every(name => images.get(name));
+		if (loaded) {
+			const frames = frameNames.map(name => {
+				const g = images.get(name);
+				return {
+					render: (x, y) => g.render(x, y, this.player.width, this.player.height)
+				};
+			});
+			// Align player bounding box to actual sprite dimensions from the first frame
+			{
+				const first = images.get(frameNames[0]);
+				if (first) {
+					this.player.width = first.width;
+					this.player.height = first.height;
+				}
+			}
+			// Provide animations to Player; first 10 frames jump, last 10 frames fall
+			const jumpFrames = frames.slice(0, 10);
+			const fallFrames = frames.slice(11, 21);
+			this.player.setAnimations(jumpFrames, fallFrames);
+		} else {
+			this.playerJumpAnim = null;
+			this.playerFallAnim = null;
+			this.currentPlayerAnim = null;
+		}
 		this.playerSpeed = 300;
 		this.gravity = 1000;
 		this.jumpVelocity = -1050;
@@ -31,6 +63,12 @@ export default class PlayState extends BaseState {
 		this.canDoubleJump = false; // one-time mid-air jump availability
 		this.gravityFlipTimer = 0; // seconds gravity is flipped
 		this.gravityFlipped = false;
+		// Screen flip animation state
+		this.screenFlipAnimating = false;
+		this.screenFlipTime = 0;
+		this.screenFlipDuration = 0.6; // seconds
+		this.screenFlipAngle = 0; // 0 => normal, Math.PI => flipped
+		this._prevGravityFlipped = false;
 		this.weaponTimer = 0; // seconds shooting is enabled
 		this.canShoot = false;
 		this.camera = new Camera();
@@ -40,6 +78,8 @@ export default class PlayState extends BaseState {
 		this.notifier = new MilestoneNotifier();
 		this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
 		this.lastEnemySpawnY = null;
+		// Testing flag: make player fully immune to enemies
+		this.testingFullImmunity = true;
 	}
 
 	enter(options = {}) {
@@ -60,9 +100,19 @@ export default class PlayState extends BaseState {
 			this.lastPowerUpSpawnY = null;
 			this.playerShieldActive = false;
 			this.playerInvulnerableTimer = 0;
+					// Enable full immunity during testing
+					if (this.testingFullImmunity) {
+						this.playerInvulnerableTimer = 999999;
+						this.playerShieldActive = true;
+					}
 			this.canDoubleJump = false;
 			this.gravityFlipTimer = 0;
 			this.gravityFlipped = false;
+			// reset screen flip animation
+			this.screenFlipAnimating = false;
+			this.screenFlipTime = 0;
+			this.screenFlipAngle = 0;
+			this._prevGravityFlipped = false;
 			this.weaponTimer = 0;
 			this.canShoot = false;
 			// reset player physics
@@ -112,6 +162,7 @@ export default class PlayState extends BaseState {
 	}
 
 	update(dt) {
+		// Player manages animation internally
 		// Pause toggle
 		if (input.isKeyPressed(KEYS.PAUSE)) {
 			return stateMachine.change(GameStateName.Pause, { playState: this });
@@ -131,18 +182,25 @@ export default class PlayState extends BaseState {
 			}
 		}
 
-		// shooting input
-		if (input.isKeyPressed(KEYS.SHOOT) && this.canShoot) {
-			const dirY = -1; // shoot upward relative to screen
-			const speed = 700;
-			this.projectiles.push(new Projectile({ x: this.player.x + this.player.width/2 - 3, y: this.player.y, width: 6, height: 10, vx: 0, vy: dirY * speed }));
+		// shooting input via Player
+		if (input.isKeyPressed(KEYS.SHOOT)) {
+			const proj = this.player.shoot();
+			if (proj) this.projectiles.push(proj);
 		}
 
 		// gravity (quarter strength when flipped for easier control)
-		this.player.ay = this.gravityFlipped ? -(Math.abs(this.gravity) * 0.25) : Math.abs(this.gravity);
+		this.player.ay = this.player.gravityFlipped ? -(Math.abs(this.gravity) * 0.25) : Math.abs(this.gravity);
 
-		// tick down post-hit immunity; when it ends, do not alter player velocity
-		if (this.playerInvulnerableTimer > 0) {
+		// Detect gravity flip toggles for screen rotation animation
+		if (this.player.gravityFlipped !== this._prevGravityFlipped) {
+			this.gravityFlipped = this.player.gravityFlipped;
+			this.screenFlipAnimating = true;
+			this.screenFlipTime = 0;
+			this._prevGravityFlipped = this.player.gravityFlipped;
+		}
+
+		// tick down post-hit immunity (disabled during full-immunity testing)
+		if (!this.testingFullImmunity && this.playerInvulnerableTimer > 0) {
 			this.playerInvulnerableTimer = Math.max(0, this.playerInvulnerableTimer - dt);
 		}
 
@@ -184,8 +242,9 @@ export default class PlayState extends BaseState {
 
         // platform collisions (top-only)
 		for (const p of this.platforms) {
-            if (p.collidesTop(this.player)) {
-                p.onLand(this.player);
+			if (p.collidesTop(this.player)) {
+				p.onLand(this.player);
+				this.player.onLand();
 				this.onGround = true;
                 this.score.add(POINTS_PER_PLATFORM);
                 
@@ -218,14 +277,17 @@ export default class PlayState extends BaseState {
 			this.milestonesShown.Gold = true;
 			this.hud.currentMilestone = 'Gold';
 			this.notifier.trigger('Gold');
+			stateMachine.change(GameStateName.Victory, { milestone: 'Gold', height, score: this.score.score });
 		} else if (height >= SILVER_HEIGHT && !this.milestonesShown.Silver) {
 			this.milestonesShown.Silver = true;
 			this.hud.currentMilestone = 'Silver';
 			this.notifier.trigger('Silver');
+			stateMachine.change(GameStateName.Victory, { milestone: 'Silver', height, score: this.score.score });
 		} else if (height >= BRONZE_HEIGHT && !this.milestonesShown.Bronze) {
 			this.milestonesShown.Bronze = true;
 			this.hud.currentMilestone = 'Bronze';
 			this.notifier.trigger('Bronze');
+			stateMachine.change(GameStateName.Victory, { milestone: 'Bronze', height, score: this.score.score });
 		}
 
 		// horizontal screen wrap
@@ -250,39 +312,37 @@ export default class PlayState extends BaseState {
 		// update notifier
 		this.notifier.update(dt);
 
-		// no double-jump timer; it's single use per pickup
-
-		// tick down gravity flip timer
-		if (this.gravityFlipTimer > 0) {
-			this.gravityFlipTimer = Math.max(0, this.gravityFlipTimer - dt);
-			if (this.gravityFlipTimer === 0) {
-				this.gravityFlipped = false;
+		// advance screen flip animation if active
+		if (this.screenFlipAnimating) {
+			this.screenFlipTime = Math.min(this.screenFlipTime + dt, this.screenFlipDuration);
+			const start = this.gravityFlipped ? 0 : Math.PI; // animating towards target
+			const change = this.gravityFlipped ? Math.PI : -Math.PI;
+			this.screenFlipAngle = Easing.easeInOutQuad(this.screenFlipTime, start, change, this.screenFlipDuration);
+			if (this.screenFlipTime >= this.screenFlipDuration) {
+				this.screenFlipAnimating = false;
+				this.screenFlipAngle = this.gravityFlipped ? Math.PI : 0;
 			}
 		}
 
-		// tick down weapon timer
-		if (this.weaponTimer > 0) {
-			this.weaponTimer = Math.max(0, this.weaponTimer - dt);
-			this.canShoot = this.weaponTimer > 0;
-		}
+		// no double-jump timer; it's single use per pickup
+
+		// Player manages gravity flip timer
+
+		// Player manages weapon timer
 
 		// enemy collisions: touching enemy ends the run
 		for (const e of this.enemies) {
 			if (this.player.intersects(e)) {
 				// immune to enemies during gravity flip
-				if (this.gravityFlipped) {
+				if (this.player.gravityFlipped) {
 					continue;
 				}
 				// ignore collisions while invulnerable
-				if (this.playerInvulnerableTimer > 0) {
+				if (this.testingFullImmunity || (this.player.isInvincible && this.player.isInvincible())) {
 					continue;
 				}
-				if (this.playerShieldActive) {
-					// consume shield and grant 2s immunity
-					this.playerShieldActive = false;
-					this.playerInvulnerableTimer = 2.0;
-					continue;
-				}
+				// No shield consumption path; shield grants timed invincibility via Player
+				this.player.onHitEnemy();
 				const baseY2 = CANVAS_HEIGHT - 60;
 				const height2 = this.score.getHeightAchieved(baseY2);
 				return stateMachine.change(GameStateName.GameOver, { score: this.score.score, height: height2 });
@@ -399,12 +459,14 @@ export default class PlayState extends BaseState {
 		ctx.fillStyle = COLORS.BACKGROUND_SPACE;
 		ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-		// render world (optionally visually flipped during gravity flip)
+		// render world (optionally visually flipped/rotated during gravity flip)
 		ctx.save();
-		if (this.gravityFlipped) {
-			// Flip the screen vertically for a strong visual effect
-			ctx.translate(0, CANVAS_HEIGHT);
-			ctx.scale(1, -1);
+		// Apply rotation around canvas center. When not animating, angle is 0 or PI.
+		const angle = this.screenFlipAngle || (this.gravityFlipped ? Math.PI : 0);
+		if (angle !== 0) {
+			ctx.translate(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+			ctx.rotate(angle);
+			ctx.translate(-CANVAS_WIDTH / 2, -CANVAS_HEIGHT / 2);
 		}
 		// convert world Y to screen Y by translating camera
 		ctx.translate(0, -this.camera.y);

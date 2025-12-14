@@ -1,8 +1,9 @@
 import GameObject from '../../objects/GameObject.js';
 
 export default class PowerUp extends GameObject {
-    constructor({ x = 0, y = 0, width = 24, height = 24 } = {}) {
+    constructor({ x = 0, y = 0, width = 24, height = 24, duration = 0 } = {}) {
         super({ x, y, width, height });
+        this.duration = duration;
     }
 
     applyTo(player, playState) {

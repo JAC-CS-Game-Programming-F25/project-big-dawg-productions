@@ -7,8 +7,7 @@ export default class WeaponPowerUp extends PowerUp {
     }
 
     applyTo(player, playState) {
-        playState.weaponTimer = WEAPON_DURATION;
-        playState.canShoot = true;
+        player.enableWeapon(WEAPON_DURATION);
         this.isAlive = false;
     }
 

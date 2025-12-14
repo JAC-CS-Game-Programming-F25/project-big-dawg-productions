@@ -14,8 +14,18 @@ export default class GroundEnemy extends Enemy {
         if (this.platform) {
             this.x = this.platform.x + this.offsetX;
             this.y = this.platform.y - this.height; // stand on top
+            this.checkPlatformEdge();
         }
         // No autonomous movement
+    }
+
+    checkPlatformEdge() {
+        if (!this.platform) return;
+        // keep within platform bounds
+        const minX = this.platform.x;
+        const maxX = this.platform.x + this.platform.width - this.width;
+        if (this.x < minX) this.x = minX;
+        if (this.x > maxX) this.x = maxX;
     }
 
     render(ctx) {

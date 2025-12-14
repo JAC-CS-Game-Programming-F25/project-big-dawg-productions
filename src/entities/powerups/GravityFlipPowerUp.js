@@ -7,9 +7,8 @@ export default class GravityFlipPowerUp extends PowerUp {
     }
 
     applyTo(player, playState) {
-        // Activate gravity flip for a limited duration
-        playState.gravityFlipTimer = GRAVITY_FLIP_DURATION;
-        playState.gravityFlipped = true;
+        // Activate gravity flip via Player
+        player.flipGravity(GRAVITY_FLIP_DURATION);
         this.isAlive = false;
     }
 
