@@ -7,6 +7,7 @@ import BouncyPlatform from '../entities/platforms/BouncyPlatform.js';
 import BreakablePlatform from '../entities/platforms/BreakablePlatform.js';
 import Camera from '../services/Camera.js';
 import PlatformGenerator from '../services/PlatformGenerator.js';
+import EnemyFactory from '../services/EnemyFactory.js';
 import ScoreManager from '../services/ScoreManager.js';
 import HUD from '../ui/HUD.js';
 import MilestoneNotifier from '../ui/MilestoneNotifier.js';
@@ -20,6 +21,7 @@ export default class PlayState extends BaseState {
 		this.jumpVelocity = -1050;
 		this.onGround = true; // temporary until platforms exist
 		this.platforms = [];
+		this.enemies = [];
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
@@ -64,6 +66,16 @@ export default class PlayState extends BaseState {
 		// seed generator and ensure a buffer of platforms above
 		this.generator.seed(baseY);
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
+
+		// seed a couple enemies
+		this.spawnInitialEnemies(baseY);
+	}
+
+	spawnInitialEnemies(baseY) {
+		// one ground enemy patrolling near base
+		this.enemies.push(EnemyFactory.create('ground', { x: 80, y: baseY - 24, width: 32, height: 24, speed: 80, range: 140 }));
+		// one flying enemy above
+		this.enemies.push(EnemyFactory.create('flying', { x: CANVAS_WIDTH / 2 - 14, y: baseY - 220, width: 28, height: 20, speed: 120 }));
 	}
 
 	update(dt) {
@@ -85,6 +97,11 @@ export default class PlayState extends BaseState {
         let wasOnGround = this.onGround;
         this.onGround = false;		// update physics
 		this.player.update(dt);
+
+		// update enemies
+		for (const e of this.enemies) {
+			e.update(dt);
+		}
 
         // platform collisions (top-only)
 		for (const p of this.platforms) {
@@ -153,6 +170,15 @@ export default class PlayState extends BaseState {
 		// update notifier
 		this.notifier.update(dt);
 
+		// enemy collisions: touching enemy ends the run
+		for (const e of this.enemies) {
+			if (this.player.intersects(e)) {
+				const baseY2 = CANVAS_HEIGHT - 60;
+				const height2 = this.score.getHeightAchieved(baseY2);
+				return stateMachine.change(GameStateName.GameOver, { score: this.score.score, height: height2 });
+			}
+		}
+
 		// generate more platforms above camera when needed
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
 
@@ -174,6 +200,11 @@ export default class PlayState extends BaseState {
 		ctx.translate(0, -this.camera.y);
 		for (const p of this.platforms) {
 			p.render(ctx);
+		}
+
+		// enemies
+		for (const e of this.enemies) {
+			e.render(ctx);
 		}
 
 		// player
