@@ -7,6 +7,7 @@ import BouncyPlatform from '../entities/platforms/BouncyPlatform.js';
 import BreakablePlatform from '../entities/platforms/BreakablePlatform.js';
 import Camera from '../services/Camera.js';
 import PlatformGenerator from '../services/PlatformGenerator.js';
+import EnemyFactory from '../services/EnemyFactory.js';
 import ScoreManager from '../services/ScoreManager.js';
 import HUD from '../ui/HUD.js';
 import MilestoneNotifier from '../ui/MilestoneNotifier.js';
@@ -20,12 +21,14 @@ export default class PlayState extends BaseState {
 		this.jumpVelocity = -1050;
 		this.onGround = true; // temporary until platforms exist
 		this.platforms = [];
+		this.enemies = [];
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
 		this.hud = new HUD(this.score);
 		this.notifier = new MilestoneNotifier();
 		this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
+		this.lastEnemySpawnY = null;
 	}
 
 	enter(options = {}) {
@@ -37,6 +40,9 @@ export default class PlayState extends BaseState {
 			}
 			// reset milestone tracking
 			this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
+			// reset enemy spawning + clear existing enemies
+			this.enemies = [];
+			this.lastEnemySpawnY = null;
 			// reset player physics
 		this.player.vx = 0;
 		this.player.vy = 0;
@@ -64,6 +70,22 @@ export default class PlayState extends BaseState {
 		// seed generator and ensure a buffer of platforms above
 		this.generator.seed(baseY);
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
+
+		// enemies are gated by milestones; do not spawn at start
+
+		// initialize enemy spawn tracking
+		this.lastEnemySpawnY = baseY;
+	}
+
+	spawnInitialEnemies(baseY) {
+		// attach a ground enemy to the first platform so it rides with it
+		const platform = this.platforms[0];
+		if (platform && !(platform instanceof BreakablePlatform)) {
+			const offsetX = Math.min(Math.max(10, (platform.width - 32) / 2), platform.width - 32 - 10);
+			this.enemies.push(EnemyFactory.create('ground', { platform, offsetX, width: 32, height: 24 }));
+		}
+		// one flying enemy above
+		this.enemies.push(EnemyFactory.create('flying', { x: CANVAS_WIDTH / 2 - 14, y: baseY - 220, width: 28, height: 20, speed: 120 }));
 	}
 
 	update(dt) {
@@ -85,6 +107,14 @@ export default class PlayState extends BaseState {
         let wasOnGround = this.onGround;
         this.onGround = false;		// update physics
 		this.player.update(dt);
+
+		// update enemies
+		for (const e of this.enemies) {
+			e.update(dt);
+		}
+
+		// despawn enemies that have fallen below the bottom of the screen or are dead
+		this.enemies = this.enemies.filter(e => e.isAlive && e.y <= this.camera.y + CANVAS_HEIGHT + 200);
 
         // platform collisions (top-only)
 		for (const p of this.platforms) {
@@ -153,14 +183,68 @@ export default class PlayState extends BaseState {
 		// update notifier
 		this.notifier.update(dt);
 
+		// enemy collisions: touching enemy ends the run
+		for (const e of this.enemies) {
+			if (this.player.intersects(e)) {
+				const baseY2 = CANVAS_HEIGHT - 60;
+				const height2 = this.score.getHeightAchieved(baseY2);
+				return stateMachine.change(GameStateName.GameOver, { score: this.score.score, height: height2 });
+			}
+		}
+
 		// generate more platforms above camera when needed
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
+
+		// spawn enemies throughout the game above the camera for testing
+		this.spawnEnemiesUntilAbove(this.camera.y);
 
 		// check for game over when player fully off-screen below
 		if (this.player.top > this.camera.y + CANVAS_HEIGHT) {
 			const baseY = CANVAS_HEIGHT - 60;
 			const height = this.score.getHeightAchieved(baseY);
 			stateMachine.change(GameStateName.GameOver, { score: this.score.score, height });
+		}
+	}
+
+	spawnEnemiesUntilAbove(cameraY) {
+		// Ensure enemies are spawned up to one screen above the camera
+		const targetY = cameraY - CANVAS_HEIGHT; // one screen above
+		if (this.lastEnemySpawnY === null) this.lastEnemySpawnY = cameraY + CANVAS_HEIGHT;
+		while (this.lastEnemySpawnY > targetY) {
+			// move upward by a random band
+			const band = 180 + 120 * Math.random();
+			this.lastEnemySpawnY -= band;
+			// choose type randomly but gate by milestones
+			const r = Math.random();
+			let type = null;
+			for (let i = 0; i < 3 && !type; i++) {
+				const pick = (Math.random() < 0.5) ? 'flying' : 'ground';
+				if (pick === 'flying' && this.milestonesShown.Bronze) type = 'flying';
+				if (pick === 'ground' && this.milestonesShown.Silver) type = 'ground';
+			}
+			if (!type) {
+				// No unlocked enemy types yet; stop spawning
+				break;
+			}
+			// place within screen width
+			const w = type === 'ground' ? 32 : 28;
+			const h = type === 'ground' ? 24 : 20;
+			if (type === 'ground') {
+				// Attach ground enemy to a nearby platform at similar Y
+				let closest = null;
+				let bestDy = Infinity;
+				for (const p of this.platforms) {
+					const dy = Math.abs(p.y - this.lastEnemySpawnY);
+					if (dy < bestDy && !(p instanceof BreakablePlatform)) { bestDy = dy; closest = p; }
+				}
+				if (closest) {
+					const offsetX = Math.random() * Math.max(0, closest.width - w);
+					this.enemies.push(EnemyFactory.create('ground', { platform: closest, offsetX, width: w, height: h }));
+				}
+			} else {
+				const x = Math.max(0, Math.min(CANVAS_WIDTH - w, Math.random() * (CANVAS_WIDTH - w)));
+				this.enemies.push(EnemyFactory.create('flying', { x, y: this.lastEnemySpawnY, width: w, height: h }));
+			}
 		}
 	}
 
@@ -174,6 +258,11 @@ export default class PlayState extends BaseState {
 		ctx.translate(0, -this.camera.y);
 		for (const p of this.platforms) {
 			p.render(ctx);
+		}
+
+		// enemies
+		for (const e of this.enemies) {
+			e.render(ctx);
 		}
 
 		// player
