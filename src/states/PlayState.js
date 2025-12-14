@@ -113,6 +113,9 @@ export default class PlayState extends BaseState {
 			e.update(dt);
 		}
 
+		// despawn enemies that have fallen below the bottom of the screen or are dead
+		this.enemies = this.enemies.filter(e => e.isAlive && e.y <= this.camera.y + CANVAS_HEIGHT + 200);
+
         // platform collisions (top-only)
 		for (const p of this.platforms) {
             if (p.collidesTop(this.player)) {
