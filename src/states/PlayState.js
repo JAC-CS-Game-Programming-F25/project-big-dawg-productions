@@ -26,6 +26,8 @@ export default class PlayState extends BaseState {
 		this.powerUps = [];
 		this.playerShieldActive = false;
 		this.playerInvulnerableTimer = 0; // seconds of post-hit immunity
+		this.doubleJumpTimer = 0; // seconds double jump is available
+		this.canDoubleJump = false; // whether a mid-air jump is available right now
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
@@ -105,6 +107,14 @@ export default class PlayState extends BaseState {
 		else if (input.isKeyHeld(KEYS.RIGHT)) this.player.vx = this.playerSpeed;
 		else this.player.vx = 0;
 
+		// manual double-jump input while airborne
+		if (input.isKeyPressed(KEYS.JUMP)) {
+			if (!this.onGround && this.doubleJumpTimer > 0 && this.canDoubleJump) {
+				this.player.vy = this.jumpVelocity;
+				this.canDoubleJump = false; // consume until next landing while timer remains
+			}
+		}
+
 		// gravity
 		this.player.ay = this.gravity;
 
@@ -162,6 +172,10 @@ export default class PlayState extends BaseState {
 						this.player.vy = this.jumpVelocity;
 						this.onGround = false;
 					}
+					// refresh double-jump availability upon leaving ground if active
+					if (this.doubleJumpTimer > 0) {
+						this.canDoubleJump = true;
+					}
 				}
             }
 		}
@@ -206,6 +220,13 @@ export default class PlayState extends BaseState {
 		// update notifier
 		this.notifier.update(dt);
 
+		// tick down double-jump timer
+		if (this.doubleJumpTimer > 0) {
+			this.doubleJumpTimer = Math.max(0, this.doubleJumpTimer - dt);
+			// when timer ends, disable any remaining double jump
+			if (this.doubleJumpTimer === 0) this.canDoubleJump = false;
+		}
+
 		// enemy collisions: touching enemy ends the run
 		for (const e of this.enemies) {
 			if (this.player.intersects(e)) {
@@ -231,7 +252,7 @@ export default class PlayState extends BaseState {
 		// spawn enemies throughout the game above the camera for testing
 		this.spawnEnemiesUntilAbove(this.camera.y);
 
-		// spawn shield power-ups periodically above the camera
+		// spawn power-ups periodically above the camera
 		this.spawnPowerUpsUntilAbove(this.camera.y);
 
 		// check for game over when player fully off-screen below
@@ -295,7 +316,9 @@ export default class PlayState extends BaseState {
 					const offsetX = Math.random() * Math.max(0, p.width - w);
 					const x = p.x + offsetX;
 					const y = p.y - h;
-					this.powerUps.push(PowerUpFactory.create('shield', { x, y, width: w, height: h }));
+					// randomly choose a power-up type (currently shield or double jump)
+					const type = Math.random() < 0.5 ? 'shield' : 'doubleJump';
+					this.powerUps.push(PowerUpFactory.create(type, { x, y, width: w, height: h }));
 				}
 			}
 		}
