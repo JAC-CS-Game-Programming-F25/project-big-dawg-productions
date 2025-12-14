@@ -28,6 +28,7 @@ export default class PlayState extends BaseState {
 		this.hud = new HUD(this.score);
 		this.notifier = new MilestoneNotifier();
 		this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
+		this.lastEnemySpawnY = null;
 	}
 
 	enter(options = {}) {
@@ -39,6 +40,9 @@ export default class PlayState extends BaseState {
 			}
 			// reset milestone tracking
 			this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
+			// reset enemy spawning + clear existing enemies
+			this.enemies = [];
+			this.lastEnemySpawnY = null;
 			// reset player physics
 		this.player.vx = 0;
 		this.player.vy = 0;
@@ -67,13 +71,19 @@ export default class PlayState extends BaseState {
 		this.generator.seed(baseY);
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
 
-		// seed a couple enemies
-		this.spawnInitialEnemies(baseY);
+		// enemies are gated by milestones; do not spawn at start
+
+		// initialize enemy spawn tracking
+		this.lastEnemySpawnY = baseY;
 	}
 
 	spawnInitialEnemies(baseY) {
-		// one ground enemy patrolling near base
-		this.enemies.push(EnemyFactory.create('ground', { x: 80, y: baseY - 24, width: 32, height: 24, speed: 80, range: 140 }));
+		// attach a ground enemy to the first platform so it rides with it
+		const platform = this.platforms[0];
+		if (platform && !(platform instanceof BreakablePlatform)) {
+			const offsetX = Math.min(Math.max(10, (platform.width - 32) / 2), platform.width - 32 - 10);
+			this.enemies.push(EnemyFactory.create('ground', { platform, offsetX, width: 32, height: 24 }));
+		}
 		// one flying enemy above
 		this.enemies.push(EnemyFactory.create('flying', { x: CANVAS_WIDTH / 2 - 14, y: baseY - 220, width: 28, height: 20, speed: 120 }));
 	}
@@ -182,11 +192,56 @@ export default class PlayState extends BaseState {
 		// generate more platforms above camera when needed
 		this.generator.generateUntilAbove(this.camera.y, this.platforms);
 
+		// spawn enemies throughout the game above the camera for testing
+		this.spawnEnemiesUntilAbove(this.camera.y);
+
 		// check for game over when player fully off-screen below
 		if (this.player.top > this.camera.y + CANVAS_HEIGHT) {
 			const baseY = CANVAS_HEIGHT - 60;
 			const height = this.score.getHeightAchieved(baseY);
 			stateMachine.change(GameStateName.GameOver, { score: this.score.score, height });
+		}
+	}
+
+	spawnEnemiesUntilAbove(cameraY) {
+		// Ensure enemies are spawned up to one screen above the camera
+		const targetY = cameraY - CANVAS_HEIGHT; // one screen above
+		if (this.lastEnemySpawnY === null) this.lastEnemySpawnY = cameraY + CANVAS_HEIGHT;
+		while (this.lastEnemySpawnY > targetY) {
+			// move upward by a random band
+			const band = 180 + 120 * Math.random();
+			this.lastEnemySpawnY -= band;
+			// choose type randomly but gate by milestones
+			const r = Math.random();
+			let type = null;
+			for (let i = 0; i < 3 && !type; i++) {
+				const pick = (Math.random() < 0.5) ? 'flying' : 'ground';
+				if (pick === 'flying' && this.milestonesShown.Bronze) type = 'flying';
+				if (pick === 'ground' && this.milestonesShown.Silver) type = 'ground';
+			}
+			if (!type) {
+				// No unlocked enemy types yet; stop spawning
+				break;
+			}
+			// place within screen width
+			const w = type === 'ground' ? 32 : 28;
+			const h = type === 'ground' ? 24 : 20;
+			if (type === 'ground') {
+				// Attach ground enemy to a nearby platform at similar Y
+				let closest = null;
+				let bestDy = Infinity;
+				for (const p of this.platforms) {
+					const dy = Math.abs(p.y - this.lastEnemySpawnY);
+					if (dy < bestDy && !(p instanceof BreakablePlatform)) { bestDy = dy; closest = p; }
+				}
+				if (closest) {
+					const offsetX = Math.random() * Math.max(0, closest.width - w);
+					this.enemies.push(EnemyFactory.create('ground', { platform: closest, offsetX, width: w, height: h }));
+				}
+			} else {
+				const x = Math.max(0, Math.min(CANVAS_WIDTH - w, Math.random() * (CANVAS_WIDTH - w)));
+				this.enemies.push(EnemyFactory.create('flying', { x, y: this.lastEnemySpawnY, width: w, height: h }));
+			}
 		}
 	}
 

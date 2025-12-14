@@ -1,21 +1,21 @@
 import Enemy from './Enemy.js';
-import { COLORS, CANVAS_WIDTH } from '../../globals.js';
+import { COLORS } from '../../globals.js';
 
 export default class GroundEnemy extends Enemy {
-    constructor({ x = 0, y = 0, width = 32, height = 24, speed = 100, range = 160 } = {}) {
-        super({ x, y, width, height, speed });
-        this.originX = x;
-        this.range = range;
+    constructor({ x = 0, y = 0, width = 32, height = 24, platform = null, offsetX = 0 } = {}) {
+        super({ x, y, width, height, speed: 0 });
+        this.platform = platform; // platform the enemy stands on
+        this.offsetX = offsetX;   // local offset from platform.x
     }
 
     update(dt) {
-        this.vx = this.direction * this.speed;
-        super.update(dt);
-        const dx = this.x - this.originX;
-        if (Math.abs(dx) >= this.range) {
-            this.x = this.originX + Math.sign(dx) * this.range;
-            this.direction *= -1;
+        // Ground enemy does not move on its own; it follows the platform
+        // If attached to a moving platform, it inherits the platform's movement
+        if (this.platform) {
+            this.x = this.platform.x + this.offsetX;
+            this.y = this.platform.y - this.height; // stand on top
         }
+        // No autonomous movement
     }
 
     render(ctx) {
