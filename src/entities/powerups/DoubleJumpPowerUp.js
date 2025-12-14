@@ -1,5 +1,5 @@
 import PowerUp from './PowerUp.js';
-import { COLORS, DOUBLE_JUMP_DURATION } from '../../globals.js';
+import { COLORS } from '../../globals.js';
 
 export default class DoubleJumpPowerUp extends PowerUp {
     constructor(opts = {}) {
@@ -7,9 +7,7 @@ export default class DoubleJumpPowerUp extends PowerUp {
     }
 
     applyTo(player, playState) {
-        // Activate double jump for a limited duration
-        playState.doubleJumpTimer = DOUBLE_JUMP_DURATION;
-        // Allow double jump immediately on next airborne state
+        // Grant a one-time double jump (no timer)
         playState.canDoubleJump = true;
         this.isAlive = false;
     }

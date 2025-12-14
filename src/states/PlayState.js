@@ -28,8 +28,7 @@ export default class PlayState extends BaseState {
 		this.projectiles = [];
 		this.playerShieldActive = false;
 		this.playerInvulnerableTimer = 0; // seconds of post-hit immunity
-		this.doubleJumpTimer = 0; // seconds double jump is available
-		this.canDoubleJump = false; // whether a mid-air jump is available right now
+		this.canDoubleJump = false; // one-time mid-air jump availability
 		this.gravityFlipTimer = 0; // seconds gravity is flipped
 		this.gravityFlipped = false;
 		this.weaponTimer = 0; // seconds shooting is enabled
@@ -61,7 +60,6 @@ export default class PlayState extends BaseState {
 			this.lastPowerUpSpawnY = null;
 			this.playerShieldActive = false;
 			this.playerInvulnerableTimer = 0;
-			this.doubleJumpTimer = 0;
 			this.canDoubleJump = false;
 			this.gravityFlipTimer = 0;
 			this.gravityFlipped = false;
@@ -125,11 +123,11 @@ export default class PlayState extends BaseState {
 		else if (input.isKeyHeld(KEYS.RIGHT)) this.player.vx = this.playerSpeed;
 		else this.player.vx = 0;
 
-		// manual double-jump input while airborne
-		if (input.isKeyPressed(KEYS.JUMP)) {
-			if (!this.onGround && this.doubleJumpTimer > 0 && this.canDoubleJump) {
+		// manual double-jump input while airborne (press or hold)
+		if (input.isKeyPressed(KEYS.JUMP) || input.isKeyHeld(KEYS.JUMP)) {
+			if (!this.onGround && this.canDoubleJump) {
 				this.player.vy = this.jumpVelocity;
-				this.canDoubleJump = false; // consume until next landing while timer remains
+				this.canDoubleJump = false; // consume the one-time double jump
 			}
 		}
 
@@ -143,18 +141,9 @@ export default class PlayState extends BaseState {
 		// gravity (quarter strength when flipped for easier control)
 		this.player.ay = this.gravityFlipped ? -(Math.abs(this.gravity) * 0.25) : Math.abs(this.gravity);
 
-		// tick down post-hit immunity; when it ends, stop the character
+		// tick down post-hit immunity; when it ends, do not alter player velocity
 		if (this.playerInvulnerableTimer > 0) {
-			const prev = this.playerInvulnerableTimer;
 			this.playerInvulnerableTimer = Math.max(0, this.playerInvulnerableTimer - dt);
-			if (prev > 0 && this.playerInvulnerableTimer === 0) {
-				// Drastically slow the character instead of full stop
-				this.player.vx *= 0.1;
-				this.player.vy *= 0.1;
-				this.player.ax = 0;
-				// restore normal gravity immediately after slowdown
-				this.player.ay = this.gravityFlipped ? -Math.abs(this.gravity) : Math.abs(this.gravity);
-			}
 		}
 
         // auto-jump when landing on platform
@@ -216,10 +205,7 @@ export default class PlayState extends BaseState {
 						this.player.vy = this.jumpVelocity;
 						this.onGround = false;
 					}
-					// refresh double-jump availability upon leaving ground if active
-					if (this.doubleJumpTimer > 0) {
-						this.canDoubleJump = true;
-					}
+					// no refresh: double jump is one-time use
 				}
             }
 		}
@@ -264,12 +250,7 @@ export default class PlayState extends BaseState {
 		// update notifier
 		this.notifier.update(dt);
 
-		// tick down double-jump timer
-		if (this.doubleJumpTimer > 0) {
-			this.doubleJumpTimer = Math.max(0, this.doubleJumpTimer - dt);
-			// when timer ends, disable any remaining double jump
-			if (this.doubleJumpTimer === 0) this.canDoubleJump = false;
-		}
+		// no double-jump timer; it's single use per pickup
 
 		// tick down gravity flip timer
 		if (this.gravityFlipTimer > 0) {
@@ -288,6 +269,10 @@ export default class PlayState extends BaseState {
 		// enemy collisions: touching enemy ends the run
 		for (const e of this.enemies) {
 			if (this.player.intersects(e)) {
+				// immune to enemies during gravity flip
+				if (this.gravityFlipped) {
+					continue;
+				}
 				// ignore collisions while invulnerable
 				if (this.playerInvulnerableTimer > 0) {
 					continue;
@@ -456,7 +441,13 @@ export default class PlayState extends BaseState {
 		}
 
 		// HUD
-		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60, { immunitySeconds: this.playerInvulnerableTimer, shieldReady: this.playerShieldActive, weaponSeconds: this.weaponTimer });
+		const powerUpsForHud = [];
+		if (this.playerInvulnerableTimer > 0) powerUpsForHud.push({ label: 'Immunity', seconds: this.playerInvulnerableTimer });
+		else if (this.playerShieldActive) powerUpsForHud.push({ label: 'Immunity' });
+		if (this.weaponTimer > 0) powerUpsForHud.push({ label: 'Weapon', seconds: this.weaponTimer });
+		if (this.canDoubleJump) powerUpsForHud.push({ label: 'Double Jump' });
+		if (this.gravityFlipTimer > 0) powerUpsForHud.push({ label: 'Gravity Flip', seconds: this.gravityFlipTimer });
+		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60, { powerUps: powerUpsForHud });
 		// Milestone notification banner
 		this.notifier.render(ctx);
 		
