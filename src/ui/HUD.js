@@ -20,6 +20,10 @@ export default class HUD {
 
         // Milestone reached indicator
         ctx.fillText(`Milestone: ${this.currentMilestone || 'None'}`, 120, 90);
+
+        // Shield indicator
+        const shieldText = playState?.playerShieldActive ? 'Shield: Active' : 'Shield: None';
+        ctx.fillText(shieldText, 120, 120);
         
         ctx.restore();
     }

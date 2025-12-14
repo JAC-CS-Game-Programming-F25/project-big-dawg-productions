@@ -8,6 +8,7 @@ import BreakablePlatform from '../entities/platforms/BreakablePlatform.js';
 import Camera from '../services/Camera.js';
 import PlatformGenerator from '../services/PlatformGenerator.js';
 import EnemyFactory from '../services/EnemyFactory.js';
+import PowerUpFactory from '../services/PowerUpFactory.js';
 import ScoreManager from '../services/ScoreManager.js';
 import HUD from '../ui/HUD.js';
 import MilestoneNotifier from '../ui/MilestoneNotifier.js';
@@ -22,6 +23,7 @@ export default class PlayState extends BaseState {
 		this.onGround = true; // temporary until platforms exist
 		this.platforms = [];
 		this.enemies = [];
+		this.powerUps = [];
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
@@ -75,6 +77,7 @@ export default class PlayState extends BaseState {
 
 		// initialize enemy spawn tracking
 		this.lastEnemySpawnY = baseY;
+		this.lastPowerUpSpawnY = baseY;
 	}
 
 	spawnInitialEnemies(baseY) {
@@ -111,6 +114,11 @@ export default class PlayState extends BaseState {
 		// update enemies
 		for (const e of this.enemies) {
 			e.update(dt);
+		}
+
+		// update power-ups
+		for (const pu of this.powerUps) {
+			// power-ups are static; no update needed for now
 		}
 
 		// despawn enemies that have fallen below the bottom of the screen or are dead
@@ -186,6 +194,12 @@ export default class PlayState extends BaseState {
 		// enemy collisions: touching enemy ends the run
 		for (const e of this.enemies) {
 			if (this.player.intersects(e)) {
+				if (this.playerShieldActive) {
+					// consume shield and survive the hit
+					this.playerShieldActive = false;
+					// optionally mark enemy dead or knockback; keep simple: leave enemy
+					continue;
+				}
 				const baseY2 = CANVAS_HEIGHT - 60;
 				const height2 = this.score.getHeightAchieved(baseY2);
 				return stateMachine.change(GameStateName.GameOver, { score: this.score.score, height: height2 });
@@ -197,6 +211,9 @@ export default class PlayState extends BaseState {
 
 		// spawn enemies throughout the game above the camera for testing
 		this.spawnEnemiesUntilAbove(this.camera.y);
+
+		// spawn shield power-ups periodically above the camera
+		this.spawnPowerUpsUntilAbove(this.camera.y);
 
 		// check for game over when player fully off-screen below
 		if (this.player.top > this.camera.y + CANVAS_HEIGHT) {
@@ -245,6 +262,19 @@ export default class PlayState extends BaseState {
 				const x = Math.max(0, Math.min(CANVAS_WIDTH - w, Math.random() * (CANVAS_WIDTH - w)));
 				this.enemies.push(EnemyFactory.create('flying', { x, y: this.lastEnemySpawnY, width: w, height: h }));
 			}
+		}
+	}
+
+	spawnPowerUpsUntilAbove(cameraY) {
+		const targetY = cameraY - CANVAS_HEIGHT;
+		if (this.lastPowerUpSpawnY === null) this.lastPowerUpSpawnY = cameraY + CANVAS_HEIGHT;
+		while (this.lastPowerUpSpawnY > targetY) {
+			const band = 300 + 200 * Math.random();
+			this.lastPowerUpSpawnY -= band;
+			// for now, only shield
+			const w = 24, h = 24;
+			const x = Math.max(0, Math.min(CANVAS_WIDTH - w, Math.random() * (CANVAS_WIDTH - w)));
+			this.powerUps.push(PowerUpFactory.create('shield', { x, y: this.lastPowerUpSpawnY, width: w, height: h }));
 		}
 	}
 
