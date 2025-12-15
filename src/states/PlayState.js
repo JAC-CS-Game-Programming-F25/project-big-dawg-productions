@@ -23,28 +23,64 @@ export default class PlayState extends BaseState {
 		// Initialize player; width/height will be aligned to sprite dimensions once images load
 		this.player = new Player({ x: CANVAS_WIDTH / 2 - 45, y: CANVAS_HEIGHT - 120, width: 90, height: 90 });
 
-		// Setup player jump animation using 21 individual images loaded in config
-		const frameNames = Array.from({ length: 21 }, (_, i) => `char_jump_${String(i).padStart(2, '0')}`);
-		const loaded = frameNames.every(name => images.get(name));
-		if (loaded) {
-			const frames = frameNames.map(name => {
-				const g = images.get(name);
-				return {
-					render: (x, y) => g.render(x, y, this.player.width, this.player.height)
-				};
-			});
-			// Align player bounding box to actual sprite dimensions from the first frame
-			{
+		// Setup player jump animation: prefer sprite sheet; fallback to 21 individual images
+		let frames = null;
+		const sheet = images.get('char_jump_sheet');
+		if (sheet) {
+			// Slice 5x5 grid via evenly spaced centers; source tiles ~933x820
+			const tileW = 933, tileH = 820;
+			const cols = 5, rows = 5;
+			const sprites = [];
+			const stepX = sheet.width / cols;
+			const stepY = sheet.height / rows;
+			for (let j = 0; j < rows; j++) {
+				for (let i = 0; i < cols; i++) {
+					const centerX = (i + 0.5) * stepX;
+					const centerY = (j + 0.5) * stepY;
+					const sx = Math.max(0, Math.min(sheet.width - tileW, Math.floor(centerX - tileW / 2)));
+					const sy = Math.max(0, Math.min(sheet.height - tileH, Math.floor(centerY - tileH / 2)));
+					sprites.push(new Sprite(sheet, sx, sy, tileW, tileH));
+				}
+			}
+			// Use first 21 frames for jump/fall
+			const first21 = sprites.slice(0, 21);
+			// Player collision box ~90x90; render sprites scaled down to fit
+			this.player.width = 90;
+			this.player.height = 90;
+			const scaleX = (this.player.width / tileW) * 0.95;
+			const scaleY = (this.player.height / tileH) * 0.95;
+			const destW = tileW * scaleX;
+			const destH = tileH * scaleY;
+			const offsetX = Math.floor((this.player.width - destW) / 2);
+			const offsetY = Math.floor((this.player.height - destH) / 2);
+			frames = first21.map(s => ({
+				render: (x, y) => s.render(x + offsetX, y + offsetY, { x: scaleX, y: scaleY })
+			}));
+			// Idle uses the 4th sprite (index 3)
+			const idleSprite = first21[3];
+			const idleRenderer = idleSprite ? { render: (x, y) => idleSprite.render(x + offsetX, y + offsetY, { x: scaleX, y: scaleY }) } : null;
+		} else {
+			const frameNames = Array.from({ length: 21 }, (_, i) => `char_jump_${String(i).padStart(2, '0')}`);
+			const loaded = frameNames.every(name => images.get(name));
+			if (loaded) {
+				frames = frameNames.map(name => {
+					const g = images.get(name);
+					return { render: (x, y) => g.render(x, y, this.player.width, this.player.height) };
+				});
+				// Align player bounding box to actual sprite dimensions from the first frame
 				const first = images.get(frameNames[0]);
 				if (first) {
 					this.player.width = first.width;
 					this.player.height = first.height;
 				}
 			}
-			// Provide animations to Player; first 10 frames jump, last 10 frames fall
-			const jumpFrames = frames.slice(0, 10);
-			const fallFrames = frames.slice(11, 21);
-			this.player.setAnimations(jumpFrames, fallFrames);
+		}
+		if (frames && frames.length > 0) {
+			const jumpCount = Math.min(10, frames.length);
+			const jumpFrames = frames.slice(0, jumpCount);
+			const fallStart = frames.length >= 21 ? 11 : Math.max(0, frames.length - 10);
+			const fallFrames = frames.slice(fallStart);
+			this.player.setAnimations(jumpFrames, fallFrames, idleRenderer);
 		} else {
 			this.playerJumpAnim = null;
 			this.playerFallAnim = null;
@@ -205,8 +241,9 @@ export default class PlayState extends BaseState {
 		}
 
         // auto-jump when landing on platform
-        let wasOnGround = this.onGround;
-        this.onGround = false;		// update physics
+		let wasOnGround = this.onGround;
+		this.onGround = false;		// update physics
+		this.player.isOnGround = false;
 		this.player.update(dt);
 
 		// update enemies
@@ -246,6 +283,7 @@ export default class PlayState extends BaseState {
 				p.onLand(this.player);
 				this.player.onLand();
 				this.onGround = true;
+				this.player.isOnGround = true;
                 this.score.add(POINTS_PER_PLATFORM);
                 
                 // auto-jump immediately after landing

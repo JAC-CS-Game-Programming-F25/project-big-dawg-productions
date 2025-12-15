@@ -120,18 +120,15 @@ The core gameplay loop involves:
 #### 🖼️ Images
 
 **Sources:**
-- [Kenney.nl](https://kenney.nl) - Space Shooter Asset Pack
-- [itch.io](https://itch.io) - Pixel Adventure Assets
-- [OpenGameArt](https://opengameart.org) - Platform Game Assets
 - [itch.io](https://foozlecc.itch.io/cute-platformer-robot) - Robot Character
+
 
 **Required Sprites:**
 - Player Character: Space-themed character sprite sheet with animations for idle, jumping, falling, shooting
 - Platforms: 4 types (normal, breakable, moving, bouncy) with different visual styles
-- Enemies: 2-3 enemy types (alien creature, flying saucer, space creature)
+- Enemies: 2 enemy types (alien creature, flying saucer, space creature)
 - Power-ups: Icons for gravity flip, shield, double jump, weapon
 - Background: Parallax layers showing alien planet surface, atmosphere, and space
-- UI Elements: Hearts for health, buttons, score displays, medal icons
 
 #### ✏️ Fonts
 

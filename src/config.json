@@ -1,26 +1,6 @@
 {
 	"images": [
-		{ "name": "char_jump_00", "path": "./assets/images/sprites/character/Armature_Jump_00.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_01", "path": "./assets/images/sprites/character/Armature_Jump_01.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_02", "path": "./assets/images/sprites/character/Armature_Jump_02.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_03", "path": "./assets/images/sprites/character/Armature_Jump_03.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_04", "path": "./assets/images/sprites/character/Armature_Jump_04.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_05", "path": "./assets/images/sprites/character/Armature_Jump_05.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_06", "path": "./assets/images/sprites/character/Armature_Jump_06.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_07", "path": "./assets/images/sprites/character/Armature_Jump_07.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_08", "path": "./assets/images/sprites/character/Armature_Jump_08.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_09", "path": "./assets/images/sprites/character/Armature_Jump_09.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_10", "path": "./assets/images/sprites/character/Armature_Jump_10.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_11", "path": "./assets/images/sprites/character/Armature_Jump_11.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_12", "path": "./assets/images/sprites/character/Armature_Jump_12.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_13", "path": "./assets/images/sprites/character/Armature_Jump_13.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_14", "path": "./assets/images/sprites/character/Armature_Jump_14.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_15", "path": "./assets/images/sprites/character/Armature_Jump_15.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_16", "path": "./assets/images/sprites/character/Armature_Jump_16.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_17", "path": "./assets/images/sprites/character/Armature_Jump_17.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_18", "path": "./assets/images/sprites/character/Armature_Jump_18.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_19", "path": "./assets/images/sprites/character/Armature_Jump_19.png", "width": 90, "height": 90 },
-		{ "name": "char_jump_20", "path": "./assets/images/sprites/character/Armature_Jump_20.png", "width": 90, "height": 90 }
+		{ "name": "char_jump_sheet", "path": "./assets/images/sprites/character/Jump.png", "width": 4664, "height": 4098 }
 	],
 	"fonts": [
 

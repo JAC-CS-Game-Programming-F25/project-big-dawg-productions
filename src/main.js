@@ -4,7 +4,7 @@
  * A vertical endless jumping game where players hop between platforms,
  * collect power-ups, avoid enemies, and reach for the stars!
  *
- * Authors: [Your Name Here]
+ * Authors: Zackary De Luca
  *
  * Asset sources:
  * - Sprites: [To be added when assets are implemented]

@@ -7,6 +7,7 @@ import FallingState from '../states/player/FallingState.js';
 import ShootingState from '../states/player/ShootingState.js';
 import InvincibleState from '../states/player/InvincibleState.js';
 import DeadState from '../states/player/DeadState.js';
+import IdleState from '../states/player/IdleState.js';
 
 export default class Player extends GameEntity {
     constructor({ x = 0, y = 0, width = 0, height = 0, sprite = null } = {}) {
@@ -22,19 +23,22 @@ export default class Player extends GameEntity {
         // Animations
         this.jumpAnim = null;
         this.fallAnim = null;
+        this.idleRenderer = null;
         this.currentAnim = null;
         // Player state machine setup
         this.stateMachine.add('falling', new FallingState(this));
         this.stateMachine.add('jumping', new JumpingState(this));
+        this.stateMachine.add('idle', new IdleState(this));
         this.stateMachine.add('invincible', new InvincibleState(this));
         this.stateMachine.add('shooting', new ShootingState(this));
         this.stateMachine.add('dead', new DeadState(this));
         this.stateMachine.change('falling');
     }
 
-    setAnimations(jumpFrames, fallFrames) {
+    setAnimations(jumpFrames, fallFrames, idleRenderer = null) {
         this.jumpAnim = new Animation([...Array(jumpFrames.length).keys()], 1 / ANIMATION_FPS.PLAYER_JUMP);
         this.fallAnim = new Animation([...Array(fallFrames.length).keys()], 1 / ANIMATION_FPS.PLAYER_FALL);
+        this.idleRenderer = idleRenderer;
         // Wrap renderers to index into the provided frames
         const renderers = { jumpFrames, fallFrames };
         this.sprite = {
@@ -109,10 +113,11 @@ export default class Player extends GameEntity {
             this.invulnerableTimer = Math.max(0, this.invulnerableTimer - dt);
         }
 
-        // Drive player state transitions based on velocity unless shooting/invincible
+        // Drive player state transitions based on velocity and ground state unless shooting/invincible
         const current = this.stateMachine.getCurrentStateName();
         if (current !== 'shooting' && current !== 'invincible') {
-            if (this.vy < 0) this.stateMachine.change('jumping');
+            if (this.isOnGround && Math.abs(this.vy) < 1e-3 && this.idleRenderer) this.stateMachine.change('idle');
+            else if (this.vy < 0) this.stateMachine.change('jumping');
             else if (this.vy > 0) this.stateMachine.change('falling');
         }
         // Update current state
