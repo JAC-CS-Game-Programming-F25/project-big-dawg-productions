@@ -1,5 +1,5 @@
 import PowerUp from './PowerUp.js';
-import { COLORS, SHIELD_DURATION } from '../../globals.js';
+import { COLORS, SHIELD_DURATION, images } from '../../globals.js';
 
 export default class ShieldPowerUp extends PowerUp {
     constructor(opts = {}) {
@@ -17,7 +17,12 @@ export default class ShieldPowerUp extends PowerUp {
     }
 
     render(ctx) {
-        ctx.fillStyle = COLORS.POWERUP_SHIELD || '#3498db';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const sprite = images.get('shield_powerup');
+        if (sprite) {
+            sprite.render(this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = COLORS.POWERUP_SHIELD || '#3498db';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 }

@@ -1,5 +1,5 @@
 import PowerUp from './PowerUp.js';
-import { COLORS, GRAVITY_FLIP_DURATION } from '../../globals.js';
+import { COLORS, GRAVITY_FLIP_DURATION, images } from '../../globals.js';
 
 export default class GravityFlipPowerUp extends PowerUp {
     constructor(opts = {}) {
@@ -13,7 +13,12 @@ export default class GravityFlipPowerUp extends PowerUp {
     }
 
     render(ctx) {
-        ctx.fillStyle = COLORS.POWERUP_GRAVITY || '#9b59b6';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const sprite = images.get('gravityshift_powerup');
+        if (sprite) {
+            sprite.render(this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = COLORS.POWERUP_GRAVITY || '#9b59b6';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 }

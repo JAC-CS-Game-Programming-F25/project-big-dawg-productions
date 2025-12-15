@@ -1,5 +1,5 @@
 import PowerUp from './PowerUp.js';
-import { COLORS } from '../../globals.js';
+import { COLORS, images } from '../../globals.js';
 
 export default class DoubleJumpPowerUp extends PowerUp {
     constructor(opts = {}) {
@@ -13,7 +13,12 @@ export default class DoubleJumpPowerUp extends PowerUp {
     }
 
     render(ctx) {
-        ctx.fillStyle = COLORS.POWERUP_JUMP || '#2ecc71';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const sprite = images.get('doublejump_powerup');
+        if (sprite) {
+            sprite.render(this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = COLORS.POWERUP_JUMP || '#2ecc71';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 }

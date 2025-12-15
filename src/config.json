@@ -1,11 +1,19 @@
 {
 	"images": [
-		{ "name": "char_jump_sheet", "path": "./assets/images/sprites/character/Jump.png", "width": 4664, "height": 4098 }
+		{ "name": "char_jump_sheet", "path": "./assets/images/sprites/character/Jump.png", "width": 4664, "height": 4098 },
+		{ "name": "eye_monster_sheet", "path": "./assets/images/sprites/flyingenemy/eye_monster_idle-removebg-preview.png", "width": 1414, "height": 176 },
+		{ "name": "ground_enemy_sheet", "path": "./assets/images/sprites/groundenemy/Bringer-of-Death-SpritSheet_no-Effect.png", "width": 1120, "height": 744 },
+		{ "name": "bouncy_platform_sheet", "path": "./assets/images/sprites/bouncyplatform/0_Template_Tileset.png", "width": 192, "height": 128 },
+		{ "name": "normal_platform_sheet", "path": "./assets/images/sprites/platform/1_Industrial_Tileset_1B.png", "width": 192, "height": 128 },
+		{ "name": "moving_platform_sheet", "path": "./assets/images/sprites/movingplatform/1_Industrial_Tileset_1.png", "width": 192, "height": 128 },
+		{ "name": "breakable_platform_sheet", "path": "./assets/images/sprites/breakableplatform/2_Industrial_Tileset_1_Background.png", "width": 192, "height": 128 },
+		{ "name": "gravityshift_powerup", "path": "./assets/images/sprites/powerups/gravityshift.png", "width": 24, "height": 24 },
+		{ "name": "doublejump_powerup", "path": "./assets/images/sprites/powerups/doublejump.png", "width": 24, "height": 24 },
+		{ "name": "shield_powerup", "path": "./assets/images/sprites/powerups/shield.png", "width": 24, "height": 24 },
+		{ "name": "weapon_powerup", "path": "./assets/images/sprites/powerups/weapon.png", "width": 24, "height": 24 },
+		{ "name": "space_background", "path": "./assets/images/sprites/background/Purple_Nebula_06-1024x1024.png", "width": 210, "height": 414 }
 	],
-	"fonts": [
 
-	],
-	"sounds": [
-		
-	]
+	"fonts": [],
+	"sounds": []
 }

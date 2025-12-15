@@ -21,11 +21,12 @@ export default class PlayState extends BaseState {
 	constructor() {
 		super();
 		// Initialize player; width/height will be aligned to sprite dimensions once images load
-		this.player = new Player({ x: CANVAS_WIDTH / 2 - 45, y: CANVAS_HEIGHT - 120, width: 90, height: 90 });
+		this.player = new Player({ x: CANVAS_WIDTH / 2 - 40, y: CANVAS_HEIGHT - 120, width: 80, height: 80 });
 
 		// Setup player jump animation: prefer sprite sheet; fallback to 21 individual images
 		let frames = null;
 		const sheet = images.get('char_jump_sheet');
+		let idleRenderer = null;
 		if (sheet) {
 			// Slice 5x5 grid via evenly spaced centers; source tiles ~933x820
 			const tileW = 933, tileH = 820;
@@ -44,11 +45,11 @@ export default class PlayState extends BaseState {
 			}
 			// Use first 21 frames for jump/fall
 			const first21 = sprites.slice(0, 21);
-			// Player collision box ~90x90; render sprites scaled down to fit
-			this.player.width = 90;
-			this.player.height = 90;
-			const scaleX = (this.player.width / tileW) * 0.95;
-			const scaleY = (this.player.height / tileH) * 0.95;
+			// Player collision box slightly reduced for tighter feel
+			this.player.width = 88;
+			this.player.height = 88;
+			const scaleX = (this.player.width / tileW);
+			const scaleY = (this.player.height / tileH);
 			const destW = tileW * scaleX;
 			const destH = tileH * scaleY;
 			const offsetX = Math.floor((this.player.width - destW) / 2);
@@ -58,7 +59,7 @@ export default class PlayState extends BaseState {
 			}));
 			// Idle uses the 4th sprite (index 3)
 			const idleSprite = first21[3];
-			const idleRenderer = idleSprite ? { render: (x, y) => idleSprite.render(x + offsetX, y + offsetY, { x: scaleX, y: scaleY }) } : null;
+			idleRenderer = idleSprite ? { render: (x, y) => idleSprite.render(x + offsetX, y + offsetY, { x: scaleX, y: scaleY }) } : null;
 		} else {
 			const frameNames = Array.from({ length: 21 }, (_, i) => `char_jump_${String(i).padStart(2, '0')}`);
 			const loaded = frameNames.every(name => images.get(name));
@@ -114,8 +115,10 @@ export default class PlayState extends BaseState {
 		this.notifier = new MilestoneNotifier();
 		this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
 		this.lastEnemySpawnY = null;
-		// Testing flag: make player fully immune to enemies
-		this.testingFullImmunity = true;
+		// cached background sprite (first frame of 1x2 sheet)
+		this.bgSprite = null;
+		// Testing flag: disable full immunity
+		this.testingFullImmunity = false;
 	}
 
 	enter(options = {}) {
@@ -136,11 +139,7 @@ export default class PlayState extends BaseState {
 			this.lastPowerUpSpawnY = null;
 			this.playerShieldActive = false;
 			this.playerInvulnerableTimer = 0;
-					// Enable full immunity during testing
-					if (this.testingFullImmunity) {
-						this.playerInvulnerableTimer = 999999;
-						this.playerShieldActive = true;
-					}
+					// Full immunity testing disabled
 			this.canDoubleJump = false;
 			this.gravityFlipTimer = 0;
 			this.gravityFlipped = false;
@@ -190,11 +189,12 @@ export default class PlayState extends BaseState {
 		// attach a ground enemy to the first platform so it rides with it
 		const platform = this.platforms[0];
 		if (platform && !(platform instanceof BreakablePlatform)) {
-			const offsetX = Math.min(Math.max(10, (platform.width - 32) / 2), platform.width - 32 - 10);
-			this.enemies.push(EnemyFactory.create('ground', { platform, offsetX, width: 32, height: 24 }));
+			const gw = 96, gh = 96;
+			const offsetX = Math.min(Math.max(10, (platform.width - gw) / 2), Math.max(0, platform.width - gw - 10));
+			this.enemies.push(EnemyFactory.create('ground', { platform, offsetX, width: gw, height: gh }));
 		}
-		// one flying enemy above
-		this.enemies.push(EnemyFactory.create('flying', { x: CANVAS_WIDTH / 2 - 14, y: baseY - 220, width: 28, height: 20, speed: 120 }));
+		// one flying enemy above (larger visual size)
+		this.enemies.push(EnemyFactory.create('flying', { x: CANVAS_WIDTH / 2 - 48, y: baseY - 220, width: 96, height: 96, speed: 120 }));
 	}
 
 	update(dt) {
@@ -438,8 +438,8 @@ export default class PlayState extends BaseState {
 				break;
 			}
 			// place within screen width
-			const w = type === 'ground' ? 32 : 28;
-			const h = type === 'ground' ? 24 : 20;
+			const w = type === 'ground' ? 96 : 96;
+			const h = type === 'ground' ? 96 : 96;
 			if (type === 'ground') {
 				// Attach ground enemy to a nearby platform at similar Y
 				let closest = null;
@@ -493,9 +493,20 @@ export default class PlayState extends BaseState {
 	}
 
 	render(ctx) {
-		// clear background
-		ctx.fillStyle = COLORS.BACKGROUND_SPACE;
-		ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+		// draw background image (use first sprite of 1x2 sheet; fallback to solid fill)
+		const bg = images.get('space_background');
+		if (bg) {
+			if (!this.bgSprite) {
+				const frameHeight = Math.floor(bg.height / 2);
+				this.bgSprite = new Sprite(bg, 0, 0, bg.width, frameHeight);
+			}
+			const scaleX = CANVAS_WIDTH / this.bgSprite.width;
+			const scaleY = CANVAS_HEIGHT / this.bgSprite.height;
+			this.bgSprite.render(0, 0, { x: scaleX, y: scaleY });
+		} else {
+			ctx.fillStyle = COLORS.BACKGROUND_SPACE;
+			ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+		}
 
 		// render world (optionally visually flipped/rotated during gravity flip)
 		ctx.save();

@@ -1,5 +1,5 @@
 import PowerUp from './PowerUp.js';
-import { COLORS, WEAPON_DURATION } from '../../globals.js';
+import { COLORS, WEAPON_DURATION, images } from '../../globals.js';
 
 export default class WeaponPowerUp extends PowerUp {
     constructor(opts = {}) {
@@ -12,7 +12,12 @@ export default class WeaponPowerUp extends PowerUp {
     }
 
     render(ctx) {
-        ctx.fillStyle = COLORS.POWERUP_WEAPON || '#e74c3c';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const sprite = images.get('weapon_powerup');
+        if (sprite) {
+            sprite.render(this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = COLORS.POWERUP_WEAPON || '#e74c3c';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 }

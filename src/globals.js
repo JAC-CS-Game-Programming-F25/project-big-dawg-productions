@@ -74,8 +74,8 @@ export const POINTS_PER_POWERUP = 25;
 export const HEIGHT_BONUS_MULTIPLIER = 2; // Points multiplier based on height reached
 
 // Milestone Heights (for victory conditions)
-export const BRONZE_HEIGHT = 1000;
-export const SILVER_HEIGHT = 2000;
+export const BRONZE_HEIGHT = 5000;
+export const SILVER_HEIGHT = 10000;
 export const GOLD_HEIGHT = 15000;
 
 // UI Constants
