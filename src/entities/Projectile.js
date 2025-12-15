@@ -1,4 +1,5 @@
 import GameEntity from '../entities/GameEntity.js';
+import { images } from '../globals.js';
 
 export default class Projectile extends GameEntity {
     constructor({ x = 0, y = 0, width = 8, height = 8, vx = 0, vy = 0, speed = 600, damage = 1 } = {}) {
@@ -15,7 +16,12 @@ export default class Projectile extends GameEntity {
     }
 
     render(ctx) {
-        ctx.fillStyle = '#ffdd55';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const g = images.get && images.get('laser_bolt');
+        if (g && g.render) {
+            g.render(this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = '#ffdd55';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 }

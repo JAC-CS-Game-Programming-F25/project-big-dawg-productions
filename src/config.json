@@ -11,10 +11,13 @@
 		{ "name": "doublejump_powerup", "path": "./assets/images/sprites/powerups/doublejump.png", "width": 24, "height": 24 },
 		{ "name": "shield_powerup", "path": "./assets/images/sprites/powerups/shield.png", "width": 24, "height": 24 },
 		{ "name": "weapon_powerup", "path": "./assets/images/sprites/powerups/weapon.png", "width": 24, "height": 24 },
-		{ "name": "space_background", "path": "./assets/images/sprites/background/Purple_Nebula_06-1024x1024.png", "width": 210, "height": 414 }
+		{ "name": "space_background", "path": "./assets/images/sprites/background/Purple_Nebula_06-1024x1024.png", "width": 210, "height": 414 },
+		{ "name": "laser_bolt", "path": "./assets/images/sprites/laser/03.png", "width": 64, "height": 64 }
 	],
 
-	"fonts": [],
+	"fonts": [
+		{ "name": "BringRace", "path": "./assets/fonts/Bring Race.otf" }
+	],
 	"sounds": [
 		{ "name": "bg_music", "path": "./assets/sounds/music/let-the-games-begin-21858.mp3", "size": 1, "volume": 0.2, "loop": true }
 		,
@@ -29,5 +32,7 @@
 		{ "name": "ui_select", "path": "./assets/sounds/selection/ui-pop-sound-316482.mp3", "size": 6, "volume": 0.8, "loop": false }
 		,
 		{ "name": "ui_confirm", "path": "./assets/sounds/selection/game-start-317318.mp3", "size": 4, "volume": 1.0, "loop": false }
+		,
+		{ "name": "shoot_laser", "path": "./assets/sounds/shoot/laser-312360.mp3", "size": 8, "volume": 0.9, "loop": false }
 	]
 }

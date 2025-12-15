@@ -126,6 +126,7 @@ The core gameplay loop involves:
 - [itch.io](https://atomicrealm.itch.io/industrial-tileset) - Tiles
 - [itch.io](https://gamesupply.itch.io/free-ai-stuff) - Power-Ups   
 - [itch.io](https://twojyou.itch.io/space-sprites) - Space Backgrounds
+- [itch.io](https://wenrexa.itch.io/laser2020) - Laser
 
 
 

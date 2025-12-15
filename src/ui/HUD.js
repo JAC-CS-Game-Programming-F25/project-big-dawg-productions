@@ -1,4 +1,4 @@
-import { UI_COLOR, UI_FONT_SIZE } from '../globals.js';
+import { UI_COLOR, UI_FONT_SIZE, UI_FONT_FAMILY } from '../globals.js';
 
 export default class HUD {
     constructor(scoreManager) {
@@ -12,7 +12,7 @@ export default class HUD {
         ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any transforms
         
         ctx.fillStyle = UI_COLOR;
-        ctx.font = `${UI_FONT_SIZE}px Arial`;
+        ctx.font = `${UI_FONT_SIZE}px ${UI_FONT_FAMILY}`;
 
         const height = this.scoreManager.getHeightAchieved(baseY);
         ctx.fillText(`Score: ${this.scoreManager.score}`, 120, 30);

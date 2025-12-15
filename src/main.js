@@ -7,9 +7,9 @@
  * Authors: Zackary De Luca
  *
  * Asset sources:
- * - Sprites: [To be added when assets are implemented]
- * - Sounds: [To be added when audio is implemented]
- * - Fonts: [To be added when fonts are implemented]
+ * - Sprites: foozlecc, lionheart963, clembod, atomicrealm, gamesupply, twojyou, wenrexa
+ * - Sounds: Ahmed_Abdulaal, Arnav_Geddada, freesound_community, Bithuh
+ * - Fonts: Matt McInerney, multype studios 
  */
 
 import GameStateName from './enums/GameStateName.js';

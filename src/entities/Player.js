@@ -20,6 +20,7 @@ export default class Player extends GameEntity {
         this.gravityFlipped = false;
         this.gravityFlipTimer = 0;
         this.invulnerableTimer = 0;
+        this._blinkTime = 0;
         // Animations
         this.jumpAnim = null;
         this.fallAnim = null;
@@ -61,11 +62,14 @@ export default class Player extends GameEntity {
         if (!this.canShoot) return null;
         const speed = 700;
         this.stateMachine.change('shooting');
+        // Scale projectile 4x larger than before (6x10 -> 24x40) and center at muzzle
+        const projWidth = 24;
+        const projHeight = 40;
         return new Projectile({
-            x: this.x + this.width / 2 - 3,
-            y: this.y,
-            width: 6,
-            height: 10,
+            x: this.x + this.width / 2 - projWidth / 2,
+            y: this.y - 4,
+            width: projWidth,
+            height: projHeight,
             vx: 0,
             vy: -speed,
             damage: 1
@@ -111,6 +115,7 @@ export default class Player extends GameEntity {
         }
         if (this.invulnerableTimer > 0) {
             this.invulnerableTimer = Math.max(0, this.invulnerableTimer - dt);
+            this._blinkTime += dt;
         }
 
         // Drive player state transitions based on velocity and ground state unless shooting/invincible
@@ -124,5 +129,18 @@ export default class Player extends GameEntity {
         this.stateMachine.update(dt);
         // Advance current animation
         if (this.currentAnim) this.currentAnim.update(dt);
+    }
+
+    render(ctx) {
+        const hasBlink = this.invulnerableTimer > 0 || (this.isInvincible && this.isInvincible());
+        if (hasBlink) {
+            const phase = Math.floor((this._blinkTime * 8)) % 2; // 8 Hz blink
+            ctx.save();
+            ctx.globalAlpha = phase === 0 ? 0.4 : 1.0;
+            super.render(ctx);
+            ctx.restore();
+        } else {
+            super.render(ctx);
+        }
     }
 }

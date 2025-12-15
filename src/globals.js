@@ -84,6 +84,10 @@ export const UI_LARGE_FONT_SIZE = 48;
 export const UI_COLOR = '#FFFFFF';
 export const UI_HIGHLIGHT_COLOR = '#FFD700';
 export const UI_DANGER_COLOR = '#FF4444';
+// Font family for UI text (loaded via index.html Google Fonts)
+export const UI_FONT_FAMILY = 'Orbitron, Arial, sans-serif';
+// Special display font for big titles (Game Over, Milestones)
+export const SPECIAL_FONT_FAMILY = 'BringRace, Orbitron, Arial, sans-serif';
 
 // Input Keys
 export const KEYS = {

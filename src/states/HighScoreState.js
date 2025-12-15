@@ -1,6 +1,6 @@
 import BaseState from './BaseState.js';
 import GameStateName from '../enums/GameStateName.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, UI_COLOR, UI_FONT_SIZE, stateMachine, input, KEYS, COLORS, SAVE_KEYS } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, UI_COLOR, UI_FONT_SIZE, UI_FONT_FAMILY, stateMachine, input, KEYS, COLORS, SAVE_KEYS } from '../globals.js';
 
 export default class HighScoreState extends BaseState {
     constructor() {
@@ -25,10 +25,10 @@ export default class HighScoreState extends BaseState {
 
         ctx.fillStyle = UI_COLOR;
         ctx.textAlign = 'center';
-        ctx.font = `${UI_FONT_SIZE * 1.2}px Arial`;
+        ctx.font = `${UI_FONT_SIZE * 1.2}px ${UI_FONT_FAMILY}`;
         ctx.fillText('High Scores', CANVAS_WIDTH / 2, 120);
 
-        ctx.font = `${UI_FONT_SIZE}px Arial`;
+        ctx.font = `${UI_FONT_SIZE}px ${UI_FONT_FAMILY}`;
         if (this.scores.length === 0) {
             ctx.fillText('No scores yet.', CANVAS_WIDTH / 2, 200);
         } else {

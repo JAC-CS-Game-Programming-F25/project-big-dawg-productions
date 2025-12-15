@@ -9,6 +9,7 @@ import {
 	UI_FONT_SIZE,
 	UI_COLOR,
 	UI_HIGHLIGHT_COLOR,
+	UI_FONT_FAMILY,
 	stateMachine,
 	input,
 	sounds
@@ -93,7 +94,7 @@ export default class TitleScreenState extends BaseState {
 
 		// Draw title with pulsing effect
 		context.fillStyle = UI_HIGHLIGHT_COLOR;
-		context.font = `${UI_LARGE_FONT_SIZE * 1.5}px Arial`;
+		context.font = `${UI_LARGE_FONT_SIZE * 1.5}px ${UI_FONT_FAMILY}`;
 		context.textAlign = 'center';
 		
 		const titlePulse = 1 + Math.sin(this.titleAnimationTime * 3) * 0.1;
@@ -105,7 +106,7 @@ export default class TitleScreenState extends BaseState {
 
 		// Draw subtitle
 		context.fillStyle = UI_COLOR;
-		context.font = `${UI_FONT_SIZE}px Arial`;
+		context.font = `${UI_FONT_SIZE}px ${UI_FONT_FAMILY}`;
 		context.fillText('Jump to the Stars!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 3 + 60);
 
 		// Draw menu options
@@ -113,7 +114,7 @@ export default class TitleScreenState extends BaseState {
 
 		// Draw instructions at bottom
 		context.fillStyle = UI_COLOR;
-		context.font = `${UI_FONT_SIZE * 0.8}px Arial`;
+		context.font = `${UI_FONT_SIZE * 0.8}px ${UI_FONT_FAMILY}`;
 		context.fillText('Use ↑↓ to navigate, ENTER to select', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 50);
 	}
 
@@ -147,7 +148,7 @@ export default class TitleScreenState extends BaseState {
 
 			// Draw menu text
 			context.fillStyle = isSelected ? COLORS.BACKGROUND_SPACE : UI_COLOR;
-			context.font = `${UI_FONT_SIZE}px Arial`;
+			context.font = `${UI_FONT_SIZE}px ${UI_FONT_FAMILY}`;
 			context.textAlign = 'center';
 			context.fillText(option.text, CANVAS_WIDTH / 2, y);
 		});
