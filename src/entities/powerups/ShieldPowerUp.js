@@ -1,5 +1,5 @@
 import PowerUp from './PowerUp.js';
-import { COLORS } from '../../globals.js';
+import { COLORS, SHIELD_DURATION, images } from '../../globals.js';
 
 export default class ShieldPowerUp extends PowerUp {
     constructor(opts = {}) {
@@ -8,18 +8,21 @@ export default class ShieldPowerUp extends PowerUp {
 
     applyTo(player, playState) {
         // If currently immune, do not allow picking up another shield
-        if (playState.playerInvulnerableTimer > 0) {
-            return; // leave power-up so it can be picked up later
+        if (player.isInvincible && player.isInvincible()) {
+            return;
         }
-        // Grant one-hit shield
-        playState.playerShieldActive = true;
-        // clear any existing immunity just in case
-        playState.playerInvulnerableTimer = 0;
+        // Grant temporary invincibility per architecture
+        player.enableInvincibility(SHIELD_DURATION);
         this.isAlive = false;
     }
 
     render(ctx) {
-        ctx.fillStyle = COLORS.POWERUP_SHIELD || '#3498db';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        const sprite = images.get('shield_powerup');
+        if (sprite) {
+            sprite.render(this.x, this.y, this.width, this.height);
+        } else {
+            ctx.fillStyle = COLORS.POWERUP_SHIELD || '#3498db';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 }

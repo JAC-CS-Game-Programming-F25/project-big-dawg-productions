@@ -1,16 +1,17 @@
-import GameObject from '../objects/GameObject.js';
+import GameEntity from '../entities/GameEntity.js';
 
-export default class Projectile extends GameObject {
-    constructor({ x = 0, y = 0, width = 8, height = 8, vx = 0, vy = 0, speed = 600 } = {}) {
+export default class Projectile extends GameEntity {
+    constructor({ x = 0, y = 0, width = 8, height = 8, vx = 0, vy = 0, speed = 600, damage = 1 } = {}) {
         super({ x, y, width, height });
         this.vx = vx;
         this.vy = vy;
+        this.velocity.set(vx, vy);
         this.speed = speed;
+        this.damage = damage;
     }
 
-    update(dt) {
-        this.x += this.vx * dt;
-        this.y += this.vy * dt;
+    move(dt) {
+        this.update(dt);
     }
 
     render(ctx) {

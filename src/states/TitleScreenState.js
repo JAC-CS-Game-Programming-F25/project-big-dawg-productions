@@ -10,7 +10,8 @@ import {
 	UI_COLOR,
 	UI_HIGHLIGHT_COLOR,
 	stateMachine,
-	input
+	input,
+	sounds
 } from '../globals.js';
 
 /**
@@ -34,6 +35,14 @@ export default class TitleScreenState extends BaseState {
 		this.selectedOption = 0;
 		this.titleAnimationTime = 0;
 		this.keyPressed = false;
+		// prime confirm sound to reduce first-play latency
+		try {
+			if (sounds && sounds.get && sounds.get('ui_confirm')) {
+				// play then immediately pause to decode and cache
+				sounds.play('ui_confirm');
+				sounds.pause && sounds.pause('ui_confirm');
+			}
+		} catch {}
 	}
 
 	update(dt) {
@@ -56,16 +65,19 @@ export default class TitleScreenState extends BaseState {
 		if (input.isKeyPressed(KEYS.UP)) {
 			this.selectedOption = (this.selectedOption - 1 + this.menuOptions.length) % this.menuOptions.length;
 			this.keyPressed = true;
+			try { sounds.play('ui_select'); } catch {}
 		}
 		
 		// Navigate menu down
 		else if (input.isKeyPressed(KEYS.DOWN)) {
 			this.selectedOption = (this.selectedOption + 1) % this.menuOptions.length;
 			this.keyPressed = true;
+			try { sounds.play('ui_select'); } catch {}
 		}
 		
 		// Select option
 		else if (input.isKeyPressed(KEYS.ENTER)) {
+			try { sounds.play('ui_confirm'); } catch {}
 			this.menuOptions[this.selectedOption].action();
 			this.keyPressed = true;
 		}

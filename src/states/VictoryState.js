@@ -21,6 +21,10 @@ export default class VictoryState extends BaseState {
 			// Resume the current run instead of restarting
 			stateMachine.change(GameStateName.Play, { resume: true });
 		}
+		// Back to title screen
+		if (input.isKeyPressed(KEYS.ESCAPE)) {
+			stateMachine.change(GameStateName.TitleScreen);
+		}
 	}
 
 	render(ctx) {
@@ -37,7 +41,7 @@ export default class VictoryState extends BaseState {
 		ctx.fillText(`Score: ${this.score}`, CANVAS_WIDTH / 2, 260);
 
 		ctx.fillStyle = UI_HIGHLIGHT_COLOR;
-		ctx.fillText('Press Enter to continue', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 80);
+		ctx.fillText('Enter: Continue  |  Esc: Back to Menu', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 80);
 	}
 }
 
