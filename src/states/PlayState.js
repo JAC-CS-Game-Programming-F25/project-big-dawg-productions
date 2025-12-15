@@ -1,5 +1,5 @@
 import BaseState from './BaseState.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, POINTS_PER_ENEMY_KILL, BRONZE_HEIGHT, SILVER_HEIGHT, GOLD_HEIGHT, stateMachine, images, ANIMATION_FPS } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, COLORS, UI_COLOR, UI_FONT_FAMILY, input, KEYS, PLATFORM_SPACING_MIN, SCREEN_WRAP_BUFFER, ENTITY_CLEANUP_DISTANCE, POINTS_PER_PLATFORM, POINTS_PER_ENEMY_KILL, BRONZE_HEIGHT, SILVER_HEIGHT, GOLD_HEIGHT, stateMachine, images, ANIMATION_FPS } from '../globals.js';
 import GameStateName from '../enums/GameStateName.js';
 import Player from '../entities/Player.js';
 import Animation from '../../lib/Animation.js';
@@ -13,6 +13,8 @@ import Camera from '../services/Camera.js';
 import PlatformGenerator from '../services/PlatformGenerator.js';
 import EnemyFactory from '../services/EnemyFactory.js';
 import PowerUpFactory from '../services/PowerUpFactory.js';
+import EnemyType from '../enums/EnemyType.js';
+import PowerUpType from '../enums/PowerUpType.js';
 import ScoreManager from '../services/ScoreManager.js';
 import HUD from '../ui/HUD.js';
 import MilestoneNotifier from '../ui/MilestoneNotifier.js';
@@ -199,10 +201,10 @@ export default class PlayState extends BaseState {
 		if (platform && !(platform instanceof BreakablePlatform)) {
 			const gw = 96, gh = 96;
 			const offsetX = Math.min(Math.max(10, (platform.width - gw) / 2), Math.max(0, platform.width - gw - 10));
-			this.enemies.push(EnemyFactory.create('ground', { platform, offsetX, width: gw, height: gh }));
+			this.enemies.push(EnemyFactory.create(EnemyType.Ground, { platform, offsetX, width: gw, height: gh }));
 		}
 		// one flying enemy above (larger visual size)
-		this.enemies.push(EnemyFactory.create('flying', { x: CANVAS_WIDTH / 2 - 48, y: baseY - 220, width: 96, height: 96, speed: 120 }));
+		this.enemies.push(EnemyFactory.create(EnemyType.Flying, { x: CANVAS_WIDTH / 2 - 48, y: baseY - 220, width: 96, height: 96, speed: 120 }));
 	}
 
 	update(dt) {
@@ -454,18 +456,18 @@ export default class PlayState extends BaseState {
 			const r = Math.random();
 			let type = null;
 			for (let i = 0; i < 3 && !type; i++) {
-				const pick = (Math.random() < 0.5) ? 'flying' : 'ground';
-				if (pick === 'flying' && this.milestonesShown.Bronze) type = 'flying';
-				if (pick === 'ground' && this.milestonesShown.Silver) type = 'ground';
+				const pick = (Math.random() < 0.5) ? EnemyType.Flying : EnemyType.Ground;
+				if (pick === EnemyType.Flying && this.milestonesShown.Bronze) type = EnemyType.Flying;
+				if (pick === EnemyType.Ground && this.milestonesShown.Silver) type = EnemyType.Ground;
 			}
 			if (!type) {
 				// No unlocked enemy types yet; stop spawning
 				break;
 			}
 			// place within screen width
-			const w = type === 'ground' ? 96 : 96;
-			const h = type === 'ground' ? 96 : 96;
-			if (type === 'ground') {
+			const w = type === EnemyType.Ground ? 96 : 96;
+			const h = type === EnemyType.Ground ? 96 : 96;
+			if (type === EnemyType.Ground) {
 				// Attach ground enemy to a nearby platform at similar Y
 				let closest = null;
 				let bestDy = Infinity;
@@ -475,11 +477,11 @@ export default class PlayState extends BaseState {
 				}
 				if (closest) {
 					const offsetX = Math.random() * Math.max(0, closest.width - w);
-					this.enemies.push(EnemyFactory.create('ground', { platform: closest, offsetX, width: w, height: h }));
+					this.enemies.push(EnemyFactory.create(EnemyType.Ground, { platform: closest, offsetX, width: w, height: h }));
 				}
 			} else {
 				const x = Math.max(0, Math.min(CANVAS_WIDTH - w, Math.random() * (CANVAS_WIDTH - w)));
-				this.enemies.push(EnemyFactory.create('flying', { x, y: this.lastEnemySpawnY, width: w, height: h }));
+				this.enemies.push(EnemyFactory.create(EnemyType.Flying, { x, y: this.lastEnemySpawnY, width: w, height: h }));
 			}
 		}
 	}
@@ -500,11 +502,11 @@ export default class PlayState extends BaseState {
 					const y = p.y - h;
 					// randomly choose a power-up type (shield, double jump, gravity flip, weapon)
 					const r = Math.random();
-					let type = 'shield';
-					if (r < 0.25) type = 'shield';
-					else if (r < 0.5) type = 'doubleJump';
-					else if (r < 0.75) type = 'gravityFlip';
-					else type = 'weapon';
+					let type = PowerUpType.Shield;
+					if (r < 0.25) type = PowerUpType.Shield;
+					else if (r < 0.5) type = PowerUpType.DoubleJump;
+					else if (r < 0.75) type = PowerUpType.GravityFlip;
+					else type = PowerUpType.Weapon;
 					const pu = PowerUpFactory.create(type, { x, y, width: w, height: h });
 					// attach to platform so it moves with it
 					pu.attachPlatform = p;
@@ -591,7 +593,7 @@ export default class PlayState extends BaseState {
 		ctx.save();
 		ctx.setTransform(1, 0, 0, 1, 0, 0);
 		ctx.fillStyle = UI_COLOR;
-		ctx.font = '14px Arial';
+		ctx.font = `14px ${UI_FONT_FAMILY}`;
 		ctx.fillText('A/D to move, P to pause', 120, CANVAS_HEIGHT - 20);
 		ctx.restore();
 	}

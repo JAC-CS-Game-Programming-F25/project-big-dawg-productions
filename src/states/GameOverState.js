@@ -1,6 +1,6 @@
 import BaseState from './BaseState.js';
 import GameStateName from '../enums/GameStateName.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, UI_COLOR, UI_FONT_SIZE, UI_LARGE_FONT_SIZE, UI_HIGHLIGHT_COLOR, stateMachine, input, KEYS, COLORS, SAVE_KEYS } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, UI_COLOR, UI_FONT_SIZE, UI_LARGE_FONT_SIZE, UI_HIGHLIGHT_COLOR, UI_FONT_FAMILY, SPECIAL_FONT_FAMILY, stateMachine, input, KEYS, COLORS, SAVE_KEYS } from '../globals.js';
 
 export default class GameOverState extends BaseState {
     constructor() {
@@ -50,11 +50,11 @@ export default class GameOverState extends BaseState {
 
         ctx.fillStyle = UI_COLOR;
         ctx.textAlign = 'center';
-        ctx.font = `${UI_LARGE_FONT_SIZE}px Arial`;
+        ctx.font = `${UI_LARGE_FONT_SIZE}px ${SPECIAL_FONT_FAMILY}`;
         // Move title higher
         ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, 110);
 
-        ctx.font = `${UI_FONT_SIZE}px Arial`;
+        ctx.font = `${UI_FONT_SIZE}px ${UI_FONT_FAMILY}`;
         // Move metrics higher
         const scoreY = 180;
         const heightY = 220;

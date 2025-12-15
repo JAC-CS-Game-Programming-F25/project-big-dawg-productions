@@ -1,6 +1,6 @@
 import BaseState from './BaseState.js';
 import GameStateName from '../enums/GameStateName.js';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, UI_COLOR, UI_FONT_SIZE, UI_LARGE_FONT_SIZE, UI_HIGHLIGHT_COLOR, stateMachine, input, KEYS, COLORS } from '../globals.js';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, UI_COLOR, UI_FONT_SIZE, UI_LARGE_FONT_SIZE, UI_HIGHLIGHT_COLOR, UI_FONT_FAMILY, SPECIAL_FONT_FAMILY, stateMachine, input, KEYS, COLORS } from '../globals.js';
 
 export default class VictoryState extends BaseState {
 	constructor() {
@@ -33,10 +33,10 @@ export default class VictoryState extends BaseState {
 
 		ctx.fillStyle = UI_COLOR;
 		ctx.textAlign = 'center';
-		ctx.font = `${UI_LARGE_FONT_SIZE}px Arial`;
+		ctx.font = `${UI_LARGE_FONT_SIZE}px ${SPECIAL_FONT_FAMILY}`;
 		ctx.fillText(`${this.milestone} Reached!`, CANVAS_WIDTH / 2, 140);
 
-		ctx.font = `${UI_FONT_SIZE}px Arial`;
+		ctx.font = `${UI_FONT_SIZE}px ${UI_FONT_FAMILY}`;
 		ctx.fillText(`Height: ${Math.floor(this.height)} px`, CANVAS_WIDTH / 2, 220);
 		ctx.fillText(`Score: ${this.score}`, CANVAS_WIDTH / 2, 260);
 

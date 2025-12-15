@@ -2,17 +2,18 @@ import NormalPlatform from '../entities/platforms/NormalPlatform.js';
 import BouncyPlatform from '../entities/platforms/BouncyPlatform.js';
 import BreakablePlatform from '../entities/platforms/BreakablePlatform.js';
 import MovingPlatform from '../entities/platforms/MovingPlatform.js';
+import PlatformType from '../enums/PlatformType.js';
 
 export default class PlatformFactory {
     static create(type, options) {
         switch (type) {
-            case 'bouncy':
+            case PlatformType.Bouncy:
                 return new BouncyPlatform(options);
-            case 'breakable':
+            case PlatformType.Breakable:
                 return new BreakablePlatform(options);
-            case 'moving':
+            case PlatformType.Moving:
                 return new MovingPlatform(options);
-            case 'normal':
+            case PlatformType.Normal:
             default:
                 return new NormalPlatform(options);
         }
