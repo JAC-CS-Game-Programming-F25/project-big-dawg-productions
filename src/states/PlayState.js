@@ -111,6 +111,7 @@ export default class PlayState extends BaseState {
 		this._prevGravityFlipped = false;
 		this.weaponTimer = 0; // seconds shooting is enabled
 		this.canShoot = false;
+		this.muzzleFlashes = []; // transient flash effects on shots
 		this.camera = new Camera();
 		this.generator = new PlatformGenerator();
 		this.score = new ScoreManager();
@@ -158,8 +159,9 @@ export default class PlayState extends BaseState {
 			this.screenFlipTime = 0;
 			this.screenFlipAngle = 0;
 			this._prevGravityFlipped = false;
-			this.weaponTimer = 0;
-			this.canShoot = false;
+			// Weapon starts inactive; acquire via Weapon power-up during gameplay
+			this.player.canShoot = false;
+			this.player.weaponTimer = 0;
 			// reset player physics
 		this.player.vx = 0;
 		this.player.vy = 0;
@@ -193,6 +195,10 @@ export default class PlayState extends BaseState {
 		// initialize spawn tracking
 		this.lastEnemySpawnY = baseY;
 		this.lastPowerUpSpawnY = baseY;
+	}
+
+	createMuzzleFlash(x, y) {
+		this.muzzleFlashes.push({ x, y, r: 16, life: 0.12, alpha: 1.0 });
 	}
 
 	spawnInitialEnemies(baseY) {
@@ -233,7 +239,13 @@ export default class PlayState extends BaseState {
 		// shooting input via Player
 		if (input.isKeyPressed(KEYS.SHOOT)) {
 			const proj = this.player.shoot();
-			if (proj) this.projectiles.push(proj);
+			if (proj) {
+				this.projectiles.push(proj);
+				// play pooled laser sound
+				try { sounds.play('shoot_laser'); } catch {}
+				// create a quick muzzle flash at player center-top
+				this.createMuzzleFlash(this.player.x + this.player.width / 2, this.player.y);
+			}
 		}
 
 		// gravity (quarter strength when flipped for easier control)
@@ -275,6 +287,14 @@ export default class PlayState extends BaseState {
 		for (const b of this.projectiles) {
 			b.update(dt);
 		}
+
+		// update muzzle flashes
+		for (const f of this.muzzleFlashes) {
+			f.life -= dt;
+			f.alpha = Math.max(0, f.life / 0.12);
+			f.r += 60 * dt; // expand quickly
+		}
+		this.muzzleFlashes = this.muzzleFlashes.filter(f => f.life > 0);
 
 		// despawn enemies that have fallen below the bottom of the screen or are dead
 		this.enemies = this.enemies.filter(e => e.isAlive && e.y <= this.camera.y + CANVAS_HEIGHT + 200);
@@ -565,6 +585,18 @@ export default class PlayState extends BaseState {
 			b.render(ctx);
 		}
 
+		// muzzle flashes (render as additive bright circles)
+		ctx.save();
+		ctx.globalCompositeOperation = 'lighter';
+		for (const f of this.muzzleFlashes) {
+			ctx.globalAlpha = f.alpha;
+			ctx.fillStyle = '#FFFFFF';
+			ctx.beginPath();
+			ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+
 		// player
 		this.player.render(ctx);
 		ctx.restore();
@@ -582,7 +614,7 @@ export default class PlayState extends BaseState {
 		const powerUpsForHud = [];
 		if (this.playerInvulnerableTimer > 0) powerUpsForHud.push({ label: 'Immunity', seconds: this.playerInvulnerableTimer });
 		else if (this.playerShieldActive) powerUpsForHud.push({ label: 'Immunity' });
-		if (this.weaponTimer > 0) powerUpsForHud.push({ label: 'Weapon', seconds: this.weaponTimer });
+		if (this.player.weaponTimer > 0) powerUpsForHud.push({ label: 'Weapon', seconds: this.player.weaponTimer });
 		if (this.canDoubleJump) powerUpsForHud.push({ label: 'Double Jump' });
 		if (this.gravityFlipTimer > 0) powerUpsForHud.push({ label: 'Gravity Flip', seconds: this.gravityFlipTimer });
 		this.hud.render(ctx, this.camera.y, this.player.y, CANVAS_HEIGHT - 60, { powerUps: powerUpsForHud });
