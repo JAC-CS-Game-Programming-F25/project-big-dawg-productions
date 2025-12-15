@@ -15,5 +15,19 @@
 	],
 
 	"fonts": [],
-	"sounds": []
+	"sounds": [
+		{ "name": "bg_music", "path": "./assets/sounds/music/let-the-games-begin-21858.mp3", "size": 1, "volume": 0.2, "loop": true }
+		,
+		{ "name": "jump_sfx", "path": "./assets/sounds/jump/cartoon-jump-6462.mp3", "size": 4, "volume": 1.0, "loop": false }
+		,
+		{ "name": "powerup_collect", "path": "./assets/sounds/power-up collection/collect-coin-bag-402181.mp3", "size": 3, "volume": 1.0, "loop": false }
+		,
+		{ "name": "game_over", "path": "./assets/sounds/gameover/wah-wah-sad-trombone-6347.mp3", "size": 1, "volume": 0.9, "loop": false }
+		,
+		{ "name": "milestone", "path": "./assets/sounds/milestone/video-game-bonus-323603.mp3", "size": 2, "volume": 1.0, "loop": false }
+		,
+		{ "name": "ui_select", "path": "./assets/sounds/selection/ui-pop-sound-316482.mp3", "size": 6, "volume": 0.8, "loop": false }
+		,
+		{ "name": "ui_confirm", "path": "./assets/sounds/selection/game-start-317318.mp3", "size": 4, "volume": 1.0, "loop": false }
+	]
 }

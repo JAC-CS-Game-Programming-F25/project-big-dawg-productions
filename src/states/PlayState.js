@@ -16,6 +16,7 @@ import PowerUpFactory from '../services/PowerUpFactory.js';
 import ScoreManager from '../services/ScoreManager.js';
 import HUD from '../ui/HUD.js';
 import MilestoneNotifier from '../ui/MilestoneNotifier.js';
+import { sounds } from '../globals.js';
 
 export default class PlayState extends BaseState {
 	constructor() {
@@ -128,6 +129,13 @@ export default class PlayState extends BaseState {
 				// Do not reset; simply return to gameplay as-is
 				return;
 			}
+					// start background music for gameplay
+					try {
+						if (sounds && sounds.get && sounds.get('bg_music')) {
+							// ensure it is playing
+							sounds.play('bg_music');
+						}
+					} catch {}
 			// reset milestone tracking
 			this.milestonesShown = { Bronze: false, Silver: false, Gold: false };
 			// reset enemy spawning + clear existing enemies
@@ -215,6 +223,8 @@ export default class PlayState extends BaseState {
 			if (!this.onGround && this.canDoubleJump) {
 				this.player.vy = this.jumpVelocity;
 				this.canDoubleJump = false; // consume the one-time double jump
+				// play jump sfx for double-jump
+				try { sounds.play('jump_sfx'); } catch {}
 			}
 		}
 
@@ -270,6 +280,8 @@ export default class PlayState extends BaseState {
 		// collect power-ups and cleanup off-screen
 		for (const pu of this.powerUps) {
 			if (this.player.intersects(pu)) {
+				// play power-up collection sound
+				try { sounds.play('powerup_collect'); } catch {}
 				pu.applyTo(this.player, this);
 			}
 		}
@@ -285,6 +297,8 @@ export default class PlayState extends BaseState {
 				this.onGround = true;
 				this.player.isOnGround = true;
                 this.score.add(POINTS_PER_PLATFORM);
+				// play jump/land sfx every time the player hits a platform
+				try { sounds.play('jump_sfx'); } catch {}
                 
                 // auto-jump immediately after landing
 				if (!wasOnGround) {
@@ -293,14 +307,20 @@ export default class PlayState extends BaseState {
 					if (p instanceof BouncyPlatform) {
 						// bouncy platforms handle their own strong bounce
 						this.onGround = false;
+						// play jump sfx
+						try { sounds.play('jump_sfx'); } catch {}
 					} else if (p instanceof BreakablePlatform) {
 						// smaller hop off breakable platforms
 						this.player.vy = this.jumpVelocity * 0.65;
 						this.onGround = false;
+						// play jump sfx
+						try { sounds.play('jump_sfx'); } catch {}
 					} else {
 						// normal auto-jump
 						this.player.vy = this.jumpVelocity;
 						this.onGround = false;
+						// play jump sfx
+						try { sounds.play('jump_sfx'); } catch {}
 					}
 					// no refresh: double jump is one-time use
 				}
@@ -315,16 +335,19 @@ export default class PlayState extends BaseState {
 			this.milestonesShown.Gold = true;
 			this.hud.currentMilestone = 'Gold';
 			this.notifier.trigger('Gold');
+			try { sounds.play('milestone'); } catch {}
 			stateMachine.change(GameStateName.Victory, { milestone: 'Gold', height, score: this.score.score });
 		} else if (height >= SILVER_HEIGHT && !this.milestonesShown.Silver) {
 			this.milestonesShown.Silver = true;
 			this.hud.currentMilestone = 'Silver';
 			this.notifier.trigger('Silver');
+			try { sounds.play('milestone'); } catch {}
 			stateMachine.change(GameStateName.Victory, { milestone: 'Silver', height, score: this.score.score });
 		} else if (height >= BRONZE_HEIGHT && !this.milestonesShown.Bronze) {
 			this.milestonesShown.Bronze = true;
 			this.hud.currentMilestone = 'Bronze';
 			this.notifier.trigger('Bronze');
+			try { sounds.play('milestone'); } catch {}
 			stateMachine.change(GameStateName.Victory, { milestone: 'Bronze', height, score: this.score.score });
 		}
 
@@ -383,6 +406,7 @@ export default class PlayState extends BaseState {
 				this.player.onHitEnemy();
 				const baseY2 = CANVAS_HEIGHT - 60;
 				const height2 = this.score.getHeightAchieved(baseY2);
+				try { sounds.play('game_over'); } catch {}
 				return stateMachine.change(GameStateName.GameOver, { score: this.score.score, height: height2 });
 			}
 		}
@@ -413,6 +437,7 @@ export default class PlayState extends BaseState {
 		if (this.player.top > this.camera.y + CANVAS_HEIGHT) {
 			const baseY = CANVAS_HEIGHT - 60;
 			const height = this.score.getHeightAchieved(baseY);
+			try { sounds.play('game_over'); } catch {}
 			stateMachine.change(GameStateName.GameOver, { score: this.score.score, height });
 		}
 	}

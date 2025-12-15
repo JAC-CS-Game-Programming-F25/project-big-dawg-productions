@@ -125,7 +125,7 @@ The core gameplay loop involves:
 - [itch.io](https://clembod.itch.io/bringer-of-death-free) - Ground Enemy
 - [itch.io](https://atomicrealm.itch.io/industrial-tileset) - Tiles
 - [itch.io](https://gamesupply.itch.io/free-ai-stuff) - Power-Ups   
-- [itch.io](https://twojyou.itch.io/space-sprites) - Space Background
+- [itch.io](https://twojyou.itch.io/space-sprites) - Space Backgrounds
 
 
 

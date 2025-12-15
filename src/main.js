@@ -80,3 +80,19 @@ game.start();
 
 // Focus the canvas so that the player doesn't have to click on it.
 canvas.focus();
+
+// Unlock audio and start music on first user interaction
+let _musicStarted = false;
+const _startMusic = () => {
+	if (_musicStarted) return;
+	try {
+		if (sounds && sounds.get && sounds.get('bg_music')) {
+			sounds.play('bg_music');
+			_musicStarted = true;
+			window.removeEventListener('pointerdown', _startMusic);
+			window.removeEventListener('keydown', _startMusic);
+		}
+	} catch {}
+};
+window.addEventListener('pointerdown', _startMusic, { once: false });
+window.addEventListener('keydown', _startMusic, { once: false });
